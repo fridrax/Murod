@@ -16,9 +16,9 @@ user_lang = {}
 async def start(message: types.Message):
     keyboard = InlineKeyboardMarkup(row_width=2)
     keyboard.add(
-        InlineKeyboardButton(text="🇷🇺 Русский", callback_data="lang_ru"),
-        InlineKeyboardButton(text="🇺🇿 O‘zbekcha", callback_data="lang_uz")
-    )
+    InlineKeyboardButton(text="🇷🇺 Русский", callback_data="lang_ru"),
+    InlineKeyboardButton(text="🇺🇿 O‘zbekcha", callback_data="lang_uz")
+)
     await message.answer("Выберите язык / Tilni tanlang:", reply_markup=keyboard)
 
 # Обработка выбора языка
