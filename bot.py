@@ -109,7 +109,7 @@ async def save_ticket(message: types.Message):
 📝 <b>Сообщение:</b> {user_data[user_id]["message"]}
     """.strip()
 
-    from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 keyboard = InlineKeyboardMarkup()
 keyboard.add(
