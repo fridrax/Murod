@@ -5,7 +5,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeybo
 from aiogram.utils import executor
 from datetime import datetime
 
-BOT_TOKEN = "7548380199:AAHZvNdoWsYfacfT4YlCDeYCA_z6ELGf1UI"
+BOT_TOKEN = "7548380199:AAHSbvJl4zpz4uPOo_HM8YfR9klT1EMGrZ8"
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 bot = Bot(token=BOT_TOKEN)
@@ -128,12 +128,12 @@ if __name__ == "__main__":
     loop.run_until_complete(init_db())
     executor.start_polling(dp, skip_updates=True)
 
-@dp.message_handler(lambda m: m.chat.id == -4680581564 and m.text.split()[0].startswith("/reply"))
+@dp.message_handler(lambda m: m.chat.id == -4680581564 and "/reply" in m.text)
 async def handle_admin_reply(message: types.Message):
     try:
         parts = message.text.split(" ", 2)
         if len(parts) < 3:
-            await message.reply("⚠️ Неверный формат. Используйте: /reply #00004 текст ответа")
+            await message.reply("⚠️ Неверный формат. Используйте: /reply #00005 текст ответа")
             return
 
         ticket_number = parts[1].lstrip("#")
