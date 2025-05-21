@@ -98,7 +98,7 @@ async def save_ticket(message: types.Message):
         # Отправка в группу
     admin_chat_id = -4680581564  # chat_id руководства
 
-    msg = f"""
+      msg = f"""
 📨 <b>Новое обращение!</b>
 
 📅 <b>Дата:</b> {datetime.now().strftime("%Y-%m-%d %H:%M")}
@@ -109,17 +109,17 @@ async def save_ticket(message: types.Message):
 📝 <b>Сообщение:</b> {user_data[user_id]["message"]}
     """.strip()
 
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+    from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-keyboard = InlineKeyboardMarkup()
-keyboard.add(
-    InlineKeyboardButton(
-        text="✉️ Ответить",
-        switch_inline_query_current_chat=f"/reply {ticket_number} "
+    keyboard = InlineKeyboardMarkup()
+    keyboard.add(
+        InlineKeyboardButton(
+            text="✉️ Ответить",
+            switch_inline_query_current_chat=f"/reply {ticket_number} "
+        )
     )
-)
 
-await bot.send_message(admin_chat_id, msg, parse_mode="HTML", reply_markup=keyboard)
+    await bot.send_message(admin_chat_id, msg, parse_mode="HTML", reply_markup=keyboard)
 
 user_data.pop(user_id, None)
 
