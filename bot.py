@@ -5,7 +5,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeybo
 from aiogram.utils import executor
 from datetime import datetime
 
-BOT_TOKEN = "7548380199:AAHAVvi6bDI3VbkfvezxYp4zr-4Oo6mOFXM"
+BOT_TOKEN = "7548380199:AAHSRnx9hV5Sv2_InbCMAHCl5fuIcxFtEbI"
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 bot = Bot(token=BOT_TOKEN)
@@ -109,7 +109,18 @@ async def save_ticket(message: types.Message):
 📝 <b>Сообщение:</b> {user_data[user_id]["message"]}
     """.strip()
 
-    await bot.send_message(admin_chat_id, msg, parse_mode="HTML")
+    from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+
+keyboard = InlineKeyboardMarkup()
+keyboard.add(
+    InlineKeyboardButton(
+        text="✉️ Ответить",
+        switch_inline_query_current_chat=f"/reply {ticket_number} "
+    )
+)
+
+await bot.send_message(admin_chat_id, msg, parse_mode="HTML", reply_markup=keyboard)
+
 
     user_data.pop(user_id, None)
 
