@@ -95,6 +95,22 @@ async def save_ticket(message: types.Message):
     await message.answer(confirm)
 
     user_state.pop(user_id, None)
+        # Отправка в группу
+    admin_chat_id = -4680581564  # chat_id руководства
+
+    msg = f"""
+📨 <b>Новое обращение!</b>
+
+📅 <b>Дата:</b> {datetime.now().strftime("%Y-%m-%d %H:%M")}
+🎟 <b>Номер:</b> {ticket_number}
+🌐 <b>Язык:</b> {"Русский" if lang == "ru" else "O‘zbekcha"}
+📍 <b>Город:</b> {user_data[user_id]["city"]}
+🏢 <b>Отдел:</b> {user_data[user_id]["department"]}
+📝 <b>Сообщение:</b> {user_data[user_id]["message"]}
+    """.strip()
+
+    await bot.send_message(admin_chat_id, msg, parse_mode="HTML")
+
     user_data.pop(user_id, None)
 
 if __name__ == "__main__":
