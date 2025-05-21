@@ -5,7 +5,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeybo
 from aiogram.utils import executor
 from datetime import datetime
 
-BOT_TOKEN = "7548380199:AAGVeKGlFXBeRWiGMju44n-EDiExaN0HcBA"
+BOT_TOKEN = "7548380199:AAGOJwrxWmzuZCEnloeSQ3NW0TbUJZgGvS4"
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 bot = Bot(token=BOT_TOKEN)
@@ -83,7 +83,7 @@ async def save_ticket(message: types.Message):
     conn = await asyncpg.connect(DATABASE_URL)
     row = await conn.fetchrow("SELECT COUNT(*) FROM tickets")
     count = row["count"]
-    ticket_number = f"#{str(count + 1).zfill(5)}"
+    ticket_number = str(count + 1).zfill(5)
 
     await conn.execute('''
         INSERT INTO tickets (user_id, lang, city, department, message, ticket_number)
@@ -118,7 +118,7 @@ async def save_ticket(message: types.Message):
         )
     )
 
-    await bot.send_message(admin_chat_id, msg, parse_mode="HTML", reply_markup=keyboard)
+    await bot.send_message(admin_chat_id, f"🎟 Номер: {ticket_number}", ...)
 
     user_data.pop(user_id, None)
 
@@ -131,32 +131,26 @@ if __name__ == "__main__":
 @dp.message_handler(lambda m: m.chat.id == -4680581564 and m.text.startswith("/reply"))
 async def handle_admin_reply(message: types.Message):
     try:
-        print("📨 Получено сообщение:", message.text)
-
         parts = message.text.split(" ", 2)
         if len(parts) < 3:
-            await message.reply("⚠️ Неверный формат. Используйте: /reply #00010 ваш текст")
+            await message.reply("⚠️ Неверный формат. Используйте: /reply 00010 ваш текст")
             return
 
-        ticket_number = parts[1]  # Оставляем с #
+        ticket_number = parts[1]  # просто 00010
         reply_text = parts[2]
 
         conn = await asyncpg.connect(DATABASE_URL)
-        row = await conn.fetchrow(
-            "SELECT user_id FROM tickets WHERE ticket_number = $1", ticket_number
-        )
+        row = await conn.fetchrow("SELECT user_id FROM tickets WHERE ticket_number = $1", ticket_number)
         await conn.close()
 
         if not row:
-            await message.reply("❌ Тикет не найден в базе.")
+            await message.reply("❌ Тикет не найден.")
             return
 
         user_id = row["user_id"]
-        print("🎯 Отправляем ответ пользователю с ID:", user_id)
-
         await bot.send_message(user_id, f"📩 Ответ по тикету {ticket_number}:\n\n{reply_text}")
-        await message.reply("✅ Ответ отправлен пользователю.")
+        await message.reply("✅ Ответ отправлен.")
 
     except Exception as e:
+        await message.reply(f"❌ Ошибка: {e}")
         print("‼️ Ошибка:", e)
-        await message.reply(f"❌ Ошибка: {str(e)}")
