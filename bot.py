@@ -95,10 +95,11 @@ async def save_ticket(message: types.Message):
     await message.answer(confirm)
 
     user_state.pop(user_id, None)
-        # Отправка в группу
+
+    # Отправка в группу
     admin_chat_id = -4680581564  # chat_id руководства
 
-msg = f"""
+    msg = f"""
 📨 <b>Новое обращение!</b>
 
 📅 <b>Дата:</b> {datetime.now().strftime("%Y-%m-%d %H:%M")}
@@ -108,8 +109,6 @@ msg = f"""
 🏢 <b>Отдел:</b> {user_data[user_id]["department"]}
 📝 <b>Сообщение:</b> {user_data[user_id]["message"]}
     """.strip()
-
-    from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
     keyboard = InlineKeyboardMarkup()
     keyboard.add(
@@ -121,7 +120,7 @@ msg = f"""
 
     await bot.send_message(admin_chat_id, msg, parse_mode="HTML", reply_markup=keyboard)
 
-user_data.pop(user_id, None)
+    user_data.pop(user_id, None)
 
 if __name__ == "__main__":
     import asyncio
