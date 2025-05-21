@@ -5,7 +5,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeybo
 from aiogram.utils import executor
 from datetime import datetime
 
-BOT_TOKEN = "7548380199:AAFRrcCvn8_QOUtLfR3aZ60uMe4NLZ-ShkM"
+BOT_TOKEN = "7548380199:AAHpCldAdBRsXyat5uhtDvbENkE8rZgawTU"
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 bot = Bot(token=BOT_TOKEN)
@@ -128,22 +128,22 @@ if __name__ == "__main__":
     loop.run_until_complete(init_db())
     executor.start_polling(dp, skip_updates=True)
 
-@dp.message_handler(lambda m: m.chat.id == -4680581564 and "/reply" in m.text)
+@dp.message_handler(lambda m: m.chat.id == -4680581564 and m.text.startswith("/reply"))
 async def handle_admin_reply(message: types.Message):
     try:
-        print("Получено сообщение:", message.text)
+        print("📨 Получено сообщение:", message.text)
 
         parts = message.text.split(" ", 2)
         if len(parts) < 3:
-            await message.reply("⚠️ Неверный формат. Используйте: /reply #00006 текст")
+            await message.reply("⚠️ Неверный формат. Используйте: /reply #00008 текст ответа")
             return
 
-        ticket_number = parts[1]  # ⛔ НЕ удаляем #
+        ticket_number = parts[1].lstrip("#")  # удаляем #, чтобы найти по значению в БД
         reply_text = parts[2]
 
         conn = await asyncpg.connect(DATABASE_URL)
         row = await conn.fetchrow(
-            "SELECT user_id FROM tickets WHERE ticket_number = $1", ticket_number
+            "SELECT user_id FROM tickets WHERE ticket_number = $1", f"#{ticket_number}"
         )
         await conn.close()
 
@@ -154,9 +154,9 @@ async def handle_admin_reply(message: types.Message):
         user_id = row["user_id"]
         print("🎯 Отправляем ответ пользователю с ID:", user_id)
 
-        await bot.send_message(user_id, f"📩 Ответ по тикету {ticket_number}:\n\n{reply_text}")
+        await bot.send_message(user_id, f"📩 Ответ по тикету #{ticket_number}:\n\n{reply_text}")
         await message.reply("✅ Ответ отправлен пользователю.")
 
     except Exception as e:
-        await message.reply(f"❌ Ошибка: {str(e)}")
         print("‼️ Ошибка:", e)
+        await message.reply(f"❌ Ошибка: {str(e)}")
