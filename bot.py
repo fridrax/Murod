@@ -121,8 +121,7 @@ keyboard.add(
 
 await bot.send_message(admin_chat_id, msg, parse_mode="HTML", reply_markup=keyboard)
 
-
-    user_data.pop(user_id, None)
+user_data.pop(user_id, None)
 
 if __name__ == "__main__":
     import asyncio
