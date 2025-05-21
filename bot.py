@@ -5,7 +5,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeybo
 from aiogram.utils import executor
 from datetime import datetime
 
-BOT_TOKEN = "7548380199:AAFlCvOngdtLx3Tep3shMjfPTJ3qFjMlj4A"
+BOT_TOKEN = "7548380199:AAFRrcCvn8_QOUtLfR3aZ60uMe4NLZ-ShkM"
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 bot = Bot(token=BOT_TOKEN)
@@ -138,11 +138,13 @@ async def handle_admin_reply(message: types.Message):
             await message.reply("⚠️ Неверный формат. Используйте: /reply #00006 текст")
             return
 
-        ticket_number = parts[1].lstrip("#")
+        ticket_number = parts[1]  # ⛔ НЕ удаляем #
         reply_text = parts[2]
 
         conn = await asyncpg.connect(DATABASE_URL)
-        row = await conn.fetchrow("SELECT user_id FROM tickets WHERE ticket_number = $1", f"#{ticket_number}")
+        row = await conn.fetchrow(
+            "SELECT user_id FROM tickets WHERE ticket_number = $1", ticket_number
+        )
         await conn.close()
 
         if not row:
@@ -152,7 +154,7 @@ async def handle_admin_reply(message: types.Message):
         user_id = row["user_id"]
         print("🎯 Отправляем ответ пользователю с ID:", user_id)
 
-        await bot.send_message(user_id, f"📩 Ответ по тикету #{ticket_number}:\n\n{reply_text}")
+        await bot.send_message(user_id, f"📩 Ответ по тикету {ticket_number}:\n\n{reply_text}")
         await message.reply("✅ Ответ отправлен пользователю.")
 
     except Exception as e:
