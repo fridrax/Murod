@@ -5,7 +5,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeybo
 from aiogram.utils import executor
 from datetime import datetime
 
-BOT_TOKEN = "7548380199:AAHSRnx9hV5Sv2_InbCMAHCl5fuIcxFtEbI"
+BOT_TOKEN = "7548380199:AAHZvNdoWsYfacfT4YlCDeYCA_z6ELGf1UI"
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 bot = Bot(token=BOT_TOKEN)
@@ -94,7 +94,7 @@ async def save_ticket(message: types.Message):
     confirm = f"✅ Ваше обращение зарегистрировано под номером {ticket_number}" if lang == "ru" else f"✅ Murojaatingiz {ticket_number} raqam bilan ro'yxatga olindi."
     await message.answer(confirm)
 
-    user_state.pop(user_id, None)
+        user_state.pop(user_id, None)
 
     # Отправка в группу
     admin_chat_id = -4680581564  # chat_id руководства
@@ -127,3 +127,31 @@ if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     loop.run_until_complete(init_db())
     executor.start_polling(dp, skip_updates=True)
+
+@dp.message_handler(lambda m: m.chat.id == -4680581564 and m.text.split()[0].startswith("/reply"))
+async def handle_admin_reply(message: types.Message):
+    try:
+        parts = message.text.split(" ", 2)
+        if len(parts) < 3:
+            await message.reply("⚠️ Неверный формат. Используйте: /reply #00004 текст ответа")
+            return
+
+        ticket_number = parts[1].lstrip("#")
+        reply_text = parts[2]
+
+        conn = await asyncpg.connect(DATABASE_URL)
+        row = await conn.fetchrow("SELECT user_id FROM tickets WHERE ticket_number = $1", f"#{ticket_number}")
+        await conn.close()
+
+        if not row:
+            await message.reply("❌ Тикет не найден.")
+            return
+
+        user_id = row["user_id"]
+        response = f"📩 Ответ по тикету #{ticket_number}:\n\n{reply_text}"
+        await bot.send_message(user_id, response)
+
+        await message.reply("✅ Ответ отправлен пользователю.")
+
+    except Exception as e:
+        await message.reply(f"❌ Ошибка: {str(e)}")
