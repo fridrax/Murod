@@ -98,7 +98,7 @@ async def save_ticket(message: types.Message):
         # Отправка в группу
     admin_chat_id = -4680581564  # chat_id руководства
 
-      msg = f"""
+msg = f"""
 📨 <b>Новое обращение!</b>
 
 📅 <b>Дата:</b> {datetime.now().strftime("%Y-%m-%d %H:%M")}
