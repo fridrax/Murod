@@ -94,7 +94,7 @@ async def save_ticket(message: types.Message):
     confirm = f"✅ Ваше обращение зарегистрировано под номером {ticket_number}" if lang == "ru" else f"✅ Murojaatingiz {ticket_number} raqam bilan ro'yxatga olindi."
     await message.answer(confirm)
 
-        user_state.pop(user_id, None)
+    user_state.pop(user_id, None)
 
     # Отправка в группу
     admin_chat_id = -4680581564  # chat_id руководства
