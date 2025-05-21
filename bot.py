@@ -5,7 +5,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeybo
 from aiogram.utils import executor
 from datetime import datetime
 
-BOT_TOKEN = "7548380199:AAHSbvJl4zpz4uPOo_HM8YfR9klT1EMGrZ8"
+BOT_TOKEN = "7548380199:AAFlCvOngdtLx3Tep3shMjfPTJ3qFjMlj4A"
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 bot = Bot(token=BOT_TOKEN)
@@ -131,9 +131,11 @@ if __name__ == "__main__":
 @dp.message_handler(lambda m: m.chat.id == -4680581564 and "/reply" in m.text)
 async def handle_admin_reply(message: types.Message):
     try:
+        print("Получено сообщение:", message.text)
+
         parts = message.text.split(" ", 2)
         if len(parts) < 3:
-            await message.reply("⚠️ Неверный формат. Используйте: /reply #00005 текст ответа")
+            await message.reply("⚠️ Неверный формат. Используйте: /reply #00006 текст")
             return
 
         ticket_number = parts[1].lstrip("#")
@@ -144,14 +146,15 @@ async def handle_admin_reply(message: types.Message):
         await conn.close()
 
         if not row:
-            await message.reply("❌ Тикет не найден.")
+            await message.reply("❌ Тикет не найден в базе.")
             return
 
         user_id = row["user_id"]
-        response = f"📩 Ответ по тикету #{ticket_number}:\n\n{reply_text}"
-        await bot.send_message(user_id, response)
+        print("🎯 Отправляем ответ пользователю с ID:", user_id)
 
+        await bot.send_message(user_id, f"📩 Ответ по тикету #{ticket_number}:\n\n{reply_text}")
         await message.reply("✅ Ответ отправлен пользователю.")
 
     except Exception as e:
         await message.reply(f"❌ Ошибка: {str(e)}")
+        print("‼️ Ошибка:", e)
