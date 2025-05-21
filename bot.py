@@ -135,15 +135,15 @@ async def handle_admin_reply(message: types.Message):
 
         parts = message.text.split(" ", 2)
         if len(parts) < 3:
-            await message.reply("⚠️ Неверный формат. Используйте: /reply #00008 текст ответа")
+            await message.reply("⚠️ Неверный формат. Используйте: /reply #00010 ваш текст")
             return
 
-        ticket_number = parts[1].lstrip("#")  # удаляем #, чтобы найти по значению в БД
+        ticket_number = parts[1]  # Оставляем с #
         reply_text = parts[2]
 
         conn = await asyncpg.connect(DATABASE_URL)
         row = await conn.fetchrow(
-            "SELECT user_id FROM tickets WHERE ticket_number = $1", f"#{ticket_number}"
+            "SELECT user_id FROM tickets WHERE ticket_number = $1", ticket_number
         )
         await conn.close()
 
@@ -154,7 +154,7 @@ async def handle_admin_reply(message: types.Message):
         user_id = row["user_id"]
         print("🎯 Отправляем ответ пользователю с ID:", user_id)
 
-        await bot.send_message(user_id, f"📩 Ответ по тикету #{ticket_number}:\n\n{reply_text}")
+        await bot.send_message(user_id, f"📩 Ответ по тикету {ticket_number}:\n\n{reply_text}")
         await message.reply("✅ Ответ отправлен пользователю.")
 
     except Exception as e:
