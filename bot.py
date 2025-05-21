@@ -149,8 +149,10 @@ async def handle_admin_reply(message: types.Message):
         await message.reply(f"❌ Ошибка: {e}")
         print("‼️ Ошибка:", e)
 
-if __name__ == "__main__":
-    import asyncio
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(init_db())
-    executor.start_polling(dp, skip_updates=True)
+import asyncio
+
+async def run():
+    await init_db()
+    await dp.start_polling()
+
+asyncio.run(run())
