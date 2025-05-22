@@ -31,6 +31,17 @@ async def init_db():
     ''')
     await conn.close()
 
+def main_menu():
+    keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
+    keyboard.add(
+        KeyboardButton("📝 Оставить заявку"),
+        KeyboardButton("📋 Статус заявки")
+    )
+    keyboard.add(
+        KeyboardButton("⚙️ Настройки")
+    )
+    return keyboard
+
 @dp.message_handler(commands=["start"])
 async def start(message: types.Message):
     keyboard = InlineKeyboardMarkup(row_width=2)
@@ -39,6 +50,7 @@ async def start(message: types.Message):
         InlineKeyboardButton(text="🇺🇿 Oʻzbekcha", callback_data="lang_uz")
     )
     await message.answer("\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u044f\u0437\u044b\u043a / Tilni tanlang:", reply_markup=keyboard)
+    await message.answer("👇 Выберите действие:", reply_markup=main_menu())
 
 @dp.callback_query_handler(lambda c: c.data.startswith("lang_"))
 async def set_language(callback: types.CallbackQuery):
@@ -48,7 +60,7 @@ async def set_language(callback: types.CallbackQuery):
     user_state[user_id] = "city"
     await callback.message.edit_reply_markup()
     text = "📍 Укажите ваш город:" if lang == "ru" else "📍 Shahringizni kiriting:"
-    await callback.message.answer(text)
+    await callback.message.answer(text, reply_markup=main_menu())
 
 @dp.message_handler(lambda message: user_state.get(message.from_user.id) == "city")
 async def ask_department(message: types.Message):
@@ -61,6 +73,18 @@ async def ask_department(message: types.Message):
     keyboard.add(KeyboardButton("Отдел -1"), KeyboardButton("Отдел -2"), KeyboardButton("Отдел -3"))
     keyboard.add(KeyboardButton("✍️ Ввести вручную" if lang == "ru" else "✍️ Qo‘lda kiritish"))
     await message.answer(text, reply_markup=keyboard)
+
+@dp.message_handler(lambda message: message.text == "📝 Оставить заявку")
+async def handle_new_ticket(message: types.Message):
+    await start(message)  # запускаем заново /start
+
+@dp.message_handler(lambda message: message.text == "📋 Статус заявки")
+async def handle_ticket_status(message: types.Message):
+    await show_user_tickets(message)
+
+@dp.message_handler(lambda message: message.text == "⚙️ Настройки")
+async def handle_settings(message: types.Message):
+    await message.answer("⚙️ Раздел «Настройки» находится в разработке.")
 
 @dp.message_handler(lambda message: user_state.get(message.from_user.id) == "department")
 async def ask_problem(message: types.Message):
