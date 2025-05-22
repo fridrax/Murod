@@ -1,12 +1,14 @@
 import os
 import asyncpg
 import asyncio
+import html
 from aiogram import Bot, Dispatcher, types
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
 from datetime import datetime
 
 BOT_TOKEN = "7548380199:AAGOJwrxWmzuZCEnloeSQ3NW0TbUJZgGvS4"
 DATABASE_URL = os.getenv("DATABASE_URL")
+admin_chat_id = -4680581564
 
 bot = Bot(token=BOT_TOKEN, parse_mode="HTML")
 dp = Dispatcher(bot)
@@ -132,9 +134,14 @@ async def ask_department(message: types.Message):
     lang = user_data[user_id]["lang"]
 
     text = "🏢 Выберите отдел:" if lang == "ru" else "🏢 Bo‘limni tanlang:"
-    keyboard = ReplyKeyboardMarkup(resize_keyboard=True).add(KeyboardButton("◀️ Назад"))
-    await message.answer(text, reply_markup=keyboard)
+    keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
 
+    departments = ["Продажи", "Технический", "Сервис"] if lang == "ru" else ["Sotuv", "Texnik", "Xizmat"]
+    for dept in departments:
+        keyboard.add(KeyboardButton(dept))
+    keyboard.add(KeyboardButton("◀️ Назад"))
+
+    await message.answer(text, reply_markup=keyboard)
 
 @dp.message_handler(lambda m: user_state.get(m.from_user.id) == "department")
 async def ask_problem(message: types.Message):
@@ -146,6 +153,12 @@ async def ask_problem(message: types.Message):
     text = "📝 Опишите проблему:" if lang == "ru" else "📝 Muammoni batafsil yozing:"
     keyboard = ReplyKeyboardMarkup(resize_keyboard=True).add(KeyboardButton("◀️ Назад"))
     await message.answer(text, reply_markup=keyboard)
+
+@dp.message_handler(lambda m: m.text in ["⚙️ Настройки", "⚙️ Sozlamalar"])
+async def settings_handler(message: types.Message):
+    lang = user_data.get(message.from_user.id, {}).get("lang", "ru")
+    text = "🛠 Раздел в разработке." if lang == "ru" else "🛠 Bo‘lim ishlab chiqilmoqda."
+    await message.answer(text)
     
 @dp.message_handler(lambda m: user_state.get(m.from_user.id) == "problem")
 async def save_ticket(message: types.Message):
