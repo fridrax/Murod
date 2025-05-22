@@ -1,1 +1,28 @@
+from aiogram import types
+from aiogram.types import CallbackQuery
+from loader import dp
+from keyboards import lang_keyboard, main_menu
 
+user_state = {}
+user_data = {}
+
+@dp.message_handler(commands=["start"])
+async def start(message: types.Message):
+    await message.answer("Выберите язык / Tilni tanlang:", reply_markup=lang_keyboard())
+
+@dp.callback_query_handler(lambda c: c.data.startswith("lang_"))
+async def set_language(callback: CallbackQuery):
+    lang = callback.data.split("_")[1]
+    user_id = callback.from_user.id
+
+    user_data[user_id] = {
+        "lang": lang,
+        "city": None,
+        "department": None,
+        "message": None
+    }
+    user_state[user_id] = None
+
+    await callback.message.edit_reply_markup()
+    await callback.answer()
+    await callback.message.answer("🔻 Выберите действие:" if lang == "ru" else "🔻 Amalni tanlang:", reply_markup=main_menu(lang))
