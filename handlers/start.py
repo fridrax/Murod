@@ -8,6 +8,9 @@ user_data = {}
 
 @dp.message_handler(commands=["start"])
 async def start(message: types.Message):
+    if message.chat.type != "private":
+        return  # Игнорировать команды в группах
+
     await message.answer("Выберите язык / Tilni tanlang:", reply_markup=lang_keyboard())
 
 @dp.callback_query_handler(lambda c: c.data.startswith("lang_"))
