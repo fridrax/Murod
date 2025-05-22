@@ -111,11 +111,11 @@ async def save_ticket(message: types.Message):
     row = await conn.fetchrow("SELECT COUNT(*) FROM tickets")
     count = row["count"]
     ticket_number = str(count + 1).zfill(5)  # '00015'
-    
+
     await conn.execute('''
-        INSERT INTO tickets (user_id, lang, city, department, message, ticket_number)
-        VALUES ($1, $2, $3, $4, $5, $6)
-    ''', user_id, lang, user_data[user_id]["city"], user_data[user_id]["department"], user_data[user_id]["message"], ticket_number)
+        INSERT INTO tickets (user_id, lang, city, department, message, ticket_number, status)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+    ''', user_id, lang, user_data[user_id]["city"], user_data[user_id]["department"], user_data[user_id]["message"], ticket_number, "Новая")
     await conn.close()
 
     # Сообщение пользователю
@@ -140,24 +140,26 @@ async def save_ticket(message: types.Message):
 📝 <b>Сообщение:</b> {user_data[user_id]["message"]}
     """.strip()
 
-    keyboard = InlineKeyboardMarkup()
-    keyboard.add(
+    reply_keyboard = InlineKeyboardMarkup()
+    reply_keyboard.add(
         InlineKeyboardButton(
             text="✉️ Ответить",
             switch_inline_query_current_chat=f"/reply {ticket_number}"
         )
     )
 
-    await bot.send_message(admin_chat_id, msg, parse_mode="HTML", reply_markup=keyboard)
-  # Статусные кнопки
-status_buttons = InlineKeyboardMarkup(row_width=3)
-status_buttons.add(
-    InlineKeyboardButton("🟡 В работу", callback_data=f"status|{ticket_number}|В работе"),
-    InlineKeyboardButton("🟢 Завершено", callback_data=f"status|{ticket_number}|Завершено"),
-    InlineKeyboardButton("🔴 Отклонено", callback_data=f"status|{ticket_number}|Отклонено")
-)
-await bot.send_message(admin_chat_id, f"✏️ Выберите новый статус для заявки {ticket_number}:", reply_markup=status_buttons)
-user_data.pop(user_id, None)
+    await bot.send_message(admin_chat_id, msg, parse_mode="HTML", reply_markup=reply_keyboard)
+
+    # Статусные кнопки
+    status_buttons = InlineKeyboardMarkup(row_width=3)
+    status_buttons.add(
+        InlineKeyboardButton("🟡 В работу", callback_data=f"status|{ticket_number}|В работе"),
+        InlineKeyboardButton("🟢 Завершено", callback_data=f"status|{ticket_number}|Завершено"),
+        InlineKeyboardButton("🔴 Отклонено", callback_data=f"status|{ticket_number}|Отклонено")
+    )
+    await bot.send_message(admin_chat_id, f"✏️ Выберите новый статус для заявки №{ticket_number}:", reply_markup=status_buttons)
+
+    user_data.pop(user_id, None)
 
 @dp.message_handler(lambda m: m.chat.id == -4680581564 and "/reply" in m.text)
 async def handle_admin_reply(message: types.Message):
