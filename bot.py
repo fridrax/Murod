@@ -136,24 +136,55 @@ async def save_ticket(message: types.Message):
 
 # ---------------- ОТВЕТ /reply 00001 текст ----------------
 @dp.message_handler(lambda m: m.chat.id == -4680581564 and m.text.startswith("/reply"))
-async def reply_user(message: types.Message):
+async def reply_to_user(message: types.Message):
     parts = message.text.split(" ", 2)
     if len(parts) < 3:
-        await message.reply("⚠️ Формат: /reply 00001 текст")
+        await message.reply("⚠️ Формат: /reply 00001 ваш ответ")
         return
+
     ticket_number, reply_text = parts[1], parts[2]
 
     conn = await asyncpg.connect(DATABASE_URL)
-    row = await conn.fetchrow("SELECT user_id FROM tickets WHERE ticket_number = $1", ticket_number)
+    row = await conn.fetchrow("SELECT user_id, city, department, message, lang FROM tickets WHERE ticket_number = $1", ticket_number)
     if not row:
-        await message.reply("❌ Тикет не найден.")
         await conn.close()
+        await message.reply("❌ Тикет не найден.")
         return
+
     user_id = row["user_id"]
+    city = row["city"]
+    department = row["department"]
+    question = row["message"]
+    lang = row["lang"]
+
+    # Отправляем пользователю ответ
     await bot.send_message(user_id, f"📩 Ответ по тикету №{ticket_number}:\n\n{reply_text}")
     await conn.execute("UPDATE tickets SET reply = $1 WHERE ticket_number = $2", reply_text, ticket_number)
     await conn.close()
-    await message.reply("✅ Ответ отправлен.")
+
+    # Уведомление в группу — с кнопками и видимым ответом
+    msg_text = f"""
+📨 <b>Новая заявка</b>
+🗓 <b>Дата:</b> {datetime.now().strftime('%Y-%m-%d %H:%M')}
+🎫 <b>Номер:</b> №{ticket_number}
+🌐 <b>Язык:</b> {"Русский" if lang == "ru" else "O‘zbekcha"}
+📍 <b>Город:</b> {city}
+🏢 <b>Отдел:</b> {department}
+📝 <b>Сообщение:</b> {question}
+
+📬 <b>Ответ:</b> {reply_text}
+    """.strip()
+
+    keyboard = InlineKeyboardMarkup(row_width=2)
+    keyboard.add(
+        InlineKeyboardButton("✉️ Ответить", switch_inline_query_current_chat=f"/reply {ticket_number}"),
+        InlineKeyboardButton("🟡 В работу", callback_data=f"status|{ticket_number}|В работе"),
+        InlineKeyboardButton("🟢 Завершено", callback_data=f"status|{ticket_number}|Завершено"),
+        InlineKeyboardButton("🔴 Отклонено", callback_data=f"status|{ticket_number}|Отклонено")
+    )
+
+    await message.reply("✅ Ответ отправлен.")  # подтверждение админу
+    await message.answer(msg_text, reply_markup=keyboard)
 
 # ---------------- ИЗМЕНЕНИЕ СТАТУСА ----------------
 @dp.callback_query_handler(lambda c: c.data.startswith("status|"))
