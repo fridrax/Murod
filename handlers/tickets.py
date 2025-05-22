@@ -74,6 +74,9 @@ async def save_ticket(message: types.Message):
     )
     user_state.pop(user_id, None)
 
+    from keyboards import main_menu
+    await message.answer("🔻 Выберите действие:", reply_markup=main_menu(lang))
+
     msg = f"""
 📨 <b>Новая заявка</b>
 🗓 <b>Дата:</b> {datetime.now().strftime('%Y-%m-%d %H:%M')}
