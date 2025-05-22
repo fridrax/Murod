@@ -77,49 +77,60 @@ async def save_ticket(message: types.Message):
     user_data[user_id]["message"] = message.text
     lang = user_data[user_id]["lang"]
 
+    # Генерация номера тикета (только цифры)
     conn = await asyncpg.connect(DATABASE_URL)
     row = await conn.fetchrow("SELECT COUNT(*) FROM tickets")
     count = row["count"]
-    ticket_number = f"\u2116{str(count + 1).zfill(5)}"  # № = № (символ №)
+    ticket_number = str(count + 1).zfill(5)  # '00015'
+    
     await conn.execute('''
         INSERT INTO tickets (user_id, lang, city, department, message, ticket_number)
         VALUES ($1, $2, $3, $4, $5, $6)
     ''', user_id, lang, user_data[user_id]["city"], user_data[user_id]["department"], user_data[user_id]["message"], ticket_number)
     await conn.close()
 
-    confirm = f"✅ Ваше обращение зарегистрировано под номером {ticket_number}" if lang == "ru" else f"✅ Murojaatingiz {ticket_number} raqam bilan ro'yxatga olindi."
+    # Сообщение пользователю
+    confirm = (
+        f"✅ Ваше обращение зарегистрировано под номером №{ticket_number}"
+        if lang == "ru" else
+        f"✅ Murojaatingiz №{ticket_number} raqam bilan ro'yxatga olindi."
+    )
     await message.answer(confirm)
     user_state.pop(user_id, None)
 
+    # Отправка в Telegram-группу
     admin_chat_id = -4680581564
+
     msg = f"""
 📨 <b>Новое обращение!</b>
 📅 <b>Дата:</b> {datetime.now().strftime("%Y-%m-%d %H:%M")}
-🎫 <b>Номер:</b> {ticket_number}
+🎫 <b>Номер:</b> №{ticket_number}
 🌐 <b>Язык:</b> {"Русский" if lang == "ru" else "O‘zbekcha"}
 📍 <b>Город:</b> {user_data[user_id]["city"]}
 🏢 <b>Отдел:</b> {user_data[user_id]["department"]}
 📝 <b>Сообщение:</b> {user_data[user_id]["message"]}
     """.strip()
+
     keyboard = InlineKeyboardMarkup()
     keyboard.add(
         InlineKeyboardButton(
             text="✉️ Ответить",
-            switch_inline_query_current_chat=f"/reply {ticket_number[1:]} "
+            switch_inline_query_current_chat=f"/reply {ticket_number}"
         )
     )
+
     await bot.send_message(admin_chat_id, msg, parse_mode="HTML", reply_markup=keyboard)
     user_data.pop(user_id, None)
-
 @dp.message_handler(lambda m: m.chat.id == -4680581564 and m.text.startswith("/reply"))
 async def handle_admin_reply(message: types.Message):
     try:
         parts = message.text.strip().split(" ", 2)
         if len(parts) < 3:
-            await message.reply("⚠️ Неверный формат. Используйте: /reply 00010 ваш текст")
+            await message.reply("⚠️ Неверный формат. Используйте: /reply 00015 ваш текст")
             return
 
-        ticket_number = f"№{parts[1].zfill(5)}"
+        ticket_input = parts[1].replace("№", "").strip().zfill(5)  # на всякий случай убираем '№'
+        ticket_number = ticket_input  # 00015
         reply_text = parts[2]
 
         conn = await asyncpg.connect(DATABASE_URL)
@@ -131,15 +142,9 @@ async def handle_admin_reply(message: types.Message):
             return
 
         user_id = row["user_id"]
-        await bot.send_message(user_id, f"📩 Ответ по тикету {ticket_number}:\n\n{reply_text}")
+        await bot.send_message(user_id, f"📩 Ответ по тикету №{ticket_number}:\n\n{reply_text}")
         await message.reply("✅ Ответ отправлен.")
 
     except Exception as e:
         await message.reply(f"❌ Ошибка: {e}")
         print("‼️ Ошибка:", e)
-
-async def run():
-    await init_db()
-    await dp.start_polling()
-
-asyncio.run(run())
