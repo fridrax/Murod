@@ -39,7 +39,12 @@ async def ask_department(message: types.Message):
     user_data[user_id]["city"] = message.text
     user_state[user_id] = "department"
     lang = user_data[user_id]["lang"]
-    await message.answer("🏢 Выберите отдел:" if lang == "ru" else "🏢 Bo‘limni tanlang:", reply_markup=departments_keyboard(lang))
+    text = (
+    "🏢 Выберите отдел из списка или введите вручную:"
+    if lang == "ru" else
+    "🏢 Bo‘limni tanlang yoki o‘zingiz yozing:"
+)
+await message.answer(text, reply_markup=departments_keyboard(lang))
 
 @dp.message_handler(lambda m: user_state.get(m.from_user.id) == "department")
 async def ask_problem(message: types.Message):
