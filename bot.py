@@ -114,21 +114,26 @@ async def save_ticket(message: types.Message):
 @dp.message_handler(lambda m: m.chat.id == -4680581564 and m.text.startswith("/reply"))
 async def handle_admin_reply(message: types.Message):
     try:
-        parts = message.text.split(" ", 2)
+        parts = message.text.strip().split(" ", 2)
         if len(parts) < 3:
             await message.reply("⚠️ Неверный формат. Используйте: /reply 00010 ваш текст")
             return
-        ticket_number = f"\u2116{parts[1]}"
+
+        ticket_number = f"№{parts[1].zfill(5)}"
         reply_text = parts[2]
+
         conn = await asyncpg.connect(DATABASE_URL)
         row = await conn.fetchrow("SELECT user_id FROM tickets WHERE ticket_number = $1", ticket_number)
         await conn.close()
+
         if not row:
             await message.reply("❌ Тикет не найден.")
             return
+
         user_id = row["user_id"]
         await bot.send_message(user_id, f"📩 Ответ по тикету {ticket_number}:\n\n{reply_text}")
         await message.reply("✅ Ответ отправлен.")
+
     except Exception as e:
         await message.reply(f"❌ Ошибка: {e}")
         print("‼️ Ошибка:", e)
