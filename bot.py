@@ -200,7 +200,7 @@ async def handle_status_change(callback: types.CallbackQuery):
     await conn.close()
 
     await callback.answer()
-    await callback.message.edit_reply_markup()
+    #await callback.message.edit_reply_markup()
     await callback.message.answer(f"✅ Статус заявки <b>{ticket_number}</b> обновлён на <b>{new_status}</b>", parse_mode="HTML")
 
 async def main():
