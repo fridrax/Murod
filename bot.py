@@ -121,16 +121,20 @@ async def save_ticket(message: types.Message):
 
     await bot.send_message(admin_chat_id, msg, parse_mode="HTML", reply_markup=keyboard)
     user_data.pop(user_id, None)
-@dp.message_handler(lambda m: m.chat.id == -4680581564 and m.text.startswith("/reply"))
+
+@dp.message_handler(lambda m: m.chat.id == -4680581564 and "/reply" in m.text)
 async def handle_admin_reply(message: types.Message):
     try:
-        parts = message.text.strip().split(" ", 2)
+        # Убираем @username, если он есть
+        text = message.text.replace(f"@{(await bot.get_me()).username}", "").strip()
+
+        parts = text.split(" ", 2)
         if len(parts) < 3:
             await message.reply("⚠️ Неверный формат. Используйте: /reply 00015 ваш текст")
             return
 
-        ticket_input = parts[1].replace("№", "").strip().zfill(5)  # на всякий случай убираем '№'
-        ticket_number = ticket_input  # 00015
+        ticket_input = parts[1].replace("№", "").strip().zfill(5)
+        ticket_number = ticket_input
         reply_text = parts[2]
 
         conn = await asyncpg.connect(DATABASE_URL)
