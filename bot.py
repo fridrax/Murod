@@ -149,6 +149,15 @@ async def save_ticket(message: types.Message):
     )
 
     await bot.send_message(admin_chat_id, msg, parse_mode="HTML", reply_markup=keyboard)
+  # Статусные кнопки
+status_buttons = InlineKeyboardMarkup(row_width=3)
+status_buttons.add(
+    InlineKeyboardButton("🟡 В работу", callback_data=f"status|{ticket_number}|В работе"),
+    InlineKeyboardButton("🟢 Завершено", callback_data=f"status|{ticket_number}|Завершено"),
+    InlineKeyboardButton("🔴 Отклонено", callback_data=f"status|{ticket_number}|Отклонено")
+)
+await bot.send_message(admin_chat_id, f"✏️ Выберите новый статус для заявки {ticket_number}:", reply_markup=status_buttons)
+
     user_data.pop(user_id, None)
 
 @dp.message_handler(lambda m: m.chat.id == -4680581564 and "/reply" in m.text)
@@ -181,3 +190,15 @@ async def handle_admin_reply(message: types.Message):
     except Exception as e:
         await message.reply(f"❌ Ошибка: {e}")
         print("‼️ Ошибка:", e)
+
+@dp.callback_query_handler(lambda c: c.data.startswith("status|"))
+async def handle_status_change(callback: types.CallbackQuery):
+    _, ticket_number, new_status = callback.data.split("|")
+
+    conn = await asyncpg.connect(DATABASE_URL)
+    await conn.execute("UPDATE tickets SET status = $1 WHERE ticket_number = $2", new_status, ticket_number)
+    await conn.close()
+
+    await callback.answer()
+    await callback.message.edit_reply_markup()
+    await callback.message.answer(f"✅ Статус заявки {ticket_number} обновлён на <b>{new_status}</b>", parse_mode="HTML")
