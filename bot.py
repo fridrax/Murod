@@ -150,7 +150,6 @@ async def save_ticket(message: types.Message):
 
     await bot.send_message(admin_chat_id, msg, parse_mode="HTML", reply_markup=reply_keyboard)
 
-    # Статусные кнопки
     status_buttons = InlineKeyboardMarkup(row_width=3)
     status_buttons.add(
         InlineKeyboardButton("🟡 В работу", callback_data=f"status|{ticket_number}|В работе"),
