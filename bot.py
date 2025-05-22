@@ -157,8 +157,7 @@ status_buttons.add(
     InlineKeyboardButton("🔴 Отклонено", callback_data=f"status|{ticket_number}|Отклонено")
 )
 await bot.send_message(admin_chat_id, f"✏️ Выберите новый статус для заявки {ticket_number}:", reply_markup=status_buttons)
-
-  user_data.pop(user_id, None)
+user_data.pop(user_id, None)
 
 @dp.message_handler(lambda m: m.chat.id == -4680581564 and "/reply" in m.text)
 async def handle_admin_reply(message: types.Message):
