@@ -2,7 +2,7 @@ import os
 import asyncpg
 import asyncio
 from aiogram import Bot, Dispatcher, types
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
 from datetime import datetime
 
 BOT_TOKEN = "7548380199:AAGOJwrxWmzuZCEnloeSQ3NW0TbUJZgGvS4"
@@ -38,10 +38,10 @@ async def init_db():
 async def start(message: types.Message):
     keyboard = InlineKeyboardMarkup(row_width=2)
     keyboard.add(
-        InlineKeyboardButton("🇷🇺 Русский", callback_data="lang_ru"),
-        InlineKeyboardButton("🇺🇿 O‘zbekcha", callback_data="lang_uz")
+        InlineKeyboardButton("\ud83c\uddf7\ud83c\uddfa \u0420\u0443\u0441\u0441\u043a\u0438\u0439", callback_data="lang_ru"),
+        InlineKeyboardButton("\ud83c\uddfa\ud83c\uddff O\u2018zbekcha", callback_data="lang_uz")
     )
-    await message.answer("Выберите язык / Tilni tanlang:", reply_markup=keyboard)
+    await message.answer("\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u044f\u0437\u044b\u043a / Tilni tanlang:", reply_markup=keyboard)
 
 # ---------------- УСТАНОВКА ЯЗЫКА ----------------
 @dp.callback_query_handler(lambda c: c.data.startswith("lang_"))
@@ -50,65 +50,58 @@ async def set_language(callback: types.CallbackQuery):
     user_id = callback.from_user.id
     user_data[user_id] = {"lang": lang}
     user_state[user_id] = None
-
     await callback.message.edit_reply_markup()
+    await send_main_menu(callback.message, lang)
 
-    menu_text = "🔻 Выберите действие:" if lang == "ru" else "🔻 Amalni tanlang:"
-    menu = ReplyKeyboardMarkup(resize_keyboard=True)
-    if lang == "ru":
-        menu.add(KeyboardButton("📝 Оставить заявку"), KeyboardButton("📋 Статус заявки"))
-        menu.add(KeyboardButton("⚙️ Настройки"))
-    else:
-        menu.add(KeyboardButton("📝 Murojaat qoldirish"), KeyboardButton("📊 Murojaat holati"))
-        menu.add(KeyboardButton("⚙️ Sozlamalar"))
-    await callback.message.answer(menu_text, reply_markup=menu)
-    
-@dp.message_handler(lambda message: message.text == "◀️ Назад")
-async def go_back(message: types.Message):
-    user_id = message.from_user.id
-    lang = user_data.get(user_id, {}).get("lang", "ru")
-    user_state[user_id] = None
-
-    text = "🔻 Выберите действие:" if lang == "ru" else "🔻 Amalni tanlang:"
+# ---------------- ГЛАВНОЕ МЕНЮ ----------------
+async def send_main_menu(message, lang):
+    text = "\ud83d\udd3b \u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u0435:" if lang == "ru" else "\ud83d\udd3b Amalni tanlang:"
     keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
     if lang == "ru":
-        keyboard.add(KeyboardButton("📝 Оставить заявку"), KeyboardButton("📊 Статус заявки"))
-        keyboard.add(KeyboardButton("⚙️ Настройки"))
+        keyboard.add(KeyboardButton("\ud83d\udcdd \u041e\u0441\u0442\u0430\u0432\u0438\u0442\u044c \u0437\u0430\u044f\u0432\u043a\u0443"), KeyboardButton("\ud83d\udcca \u0421\u0442\u0430\u0442\u0443\u0441 \u0437\u0430\u044f\u0432\u043a\u0438"))
+        keyboard.add(KeyboardButton("\u2699\ufe0f \u041d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0438"))
     else:
-        keyboard.add(KeyboardButton("📝 Murojaat qoldirish"), KeyboardButton("📊 Murojaat holati"))
-        keyboard.add(KeyboardButton("⚙️ Sozlamalar"))
+        keyboard.add(KeyboardButton("\ud83d\udcdd Murojaat qoldirish"), KeyboardButton("\ud83d\udcca Murojaat holati"))
+        keyboard.add(KeyboardButton("\u2699\ufe0f Sozlamalar"))
     await message.answer(text, reply_markup=keyboard)
 
-# ---------------- НАЧАТЬ ЗАЯВКУ ----------------
-@dp.message_handler(lambda m: m.text in ["📝 Оставить заявку", "📝 Murojaat qoldirish"])
+# ---------------- ОБРАБОТЧИКИ КНОПОК ----------------
+@dp.message_handler(lambda m: m.text in ["\ud83d\udcdd \u041e\u0441\u0442\u0430\u0432\u0438\u0442\u044c \u0437\u0430\u044f\u0432\u043a\u0443", "\ud83d\udcdd Murojaat qoldirish"])
 async def new_ticket(message: types.Message):
     user_id = message.from_user.id
     lang = user_data.get(user_id, {}).get("lang", "ru")
     user_data[user_id] = {"lang": lang}
     user_state[user_id] = "city"
-    prompt = "📍 Укажите ваш город:" if lang == "ru" else "📍 Shahringizni kiriting:"
-    await message.answer(prompt)
+    prompt = "\ud83d\udccd \u0423\u043a\u0430\u0436\u0438\u0442\u0435 \u0432\u0430\u0448 \u0433\u043e\u0440\u043e\u0434:" if lang == "ru" else "\ud83d\udccd Shahringizni kiriting:"
+    keyboard = ReplyKeyboardMarkup(resize_keyboard=True).add(KeyboardButton("\u25c0\ufe0f \u041d\u0430\u0437\u0430\u0434"))
+    await message.answer(prompt, reply_markup=keyboard)
 
-@dp.message_handler(lambda message: user_state.get(message.from_user.id) == "city")
+@dp.message_handler(lambda m: m.text == "\u25c0\ufe0f \u041d\u0430\u0437\u0430\u0434")
+async def go_back(message: types.Message):
+    user_id = message.from_user.id
+    lang = user_data.get(user_id, {}).get("lang", "ru")
+    user_state[user_id] = None
+    await send_main_menu(message, lang)
+
+# ---------------- ЭТАПЫ ----------------
+@dp.message_handler(lambda m: user_state.get(m.from_user.id) == "city")
 async def ask_department(message: types.Message):
     user_id = message.from_user.id
     user_data[user_id]["city"] = message.text
     user_state[user_id] = "department"
     lang = user_data[user_id]["lang"]
-    text = "🏢 Выберите отдел:" if lang == "ru" else "🏢 Bo‘limni tanlang:"
-    keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
-    keyboard.add(KeyboardButton("◀️ Назад"))
+    text = "\ud83c\udfe2 \u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u043e\u0442\u0434\u0435\u043b:" if lang == "ru" else "\ud83c\udfe2 Bo\u2018limni tanlang:"
+    keyboard = ReplyKeyboardMarkup(resize_keyboard=True).add(KeyboardButton("\u25c0\ufe0f \u041d\u0430\u0437\u0430\u0434"))
     await message.answer(text, reply_markup=keyboard)
 
-@dp.message_handler(lambda message: user_state.get(message.from_user.id) == "department")
+@dp.message_handler(lambda m: user_state.get(m.from_user.id) == "department")
 async def ask_problem(message: types.Message):
     user_id = message.from_user.id
-    user_state[user_id] = "problem"
     user_data[user_id]["department"] = message.text
+    user_state[user_id] = "problem"
     lang = user_data[user_id]["lang"]
-    text = "📝 Опишите проблему:" if lang == "ru" else "📝 Muammoni batafsil yozing:"
-    keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
-    keyboard.add(KeyboardButton("◀️ Назад"))
+    text = "\ud83d\udcdd \u041e\u043f\u0438\u0448\u0438\u0442\u0435 \u043f\u0440\u043e\u0431\u043b\u0435\u043c\u0443:" if lang == "ru" else "\ud83d\udcdd Muammoni batafsil yozing:"
+    keyboard = ReplyKeyboardMarkup(resize_keyboard=True).add(KeyboardButton("\u25c0\ufe0f \u041d\u0430\u0437\u0430\u0434"))
     await message.answer(text, reply_markup=keyboard)
 
 @dp.message_handler(lambda m: user_state.get(m.from_user.id) == "problem")
@@ -128,20 +121,19 @@ async def save_ticket(message: types.Message):
     await conn.close()
 
     confirm = (
-        f"✅ Ваше обращение зарегистрировано под номером №{ticket_number}"
-        if lang == "ru" else
-        f"✅ Murojaatingiz №{ticket_number} raqam bilan ro'yxatga olindi."
+        f"✅ Ваше обращение зарегистрировано под номером №{ticket_number}" if lang == "ru"
+        else f"✅ Murojaatingiz №{ticket_number} raqam bilan ro'yxatga olindi."
     )
     await message.answer(confirm, reply_markup=ReplyKeyboardRemove())
     user_state.pop(user_id, None)
 
     # Уведомление в группу
     admin_chat_id = -4680581564
-    text = f"""
+    msg = f"""
 📨 <b>Новая заявка</b>
 🗓 <b>Дата:</b> {datetime.now().strftime('%Y-%m-%d %H:%M')}
 🎫 <b>Номер:</b> №{ticket_number}
-🌐 <b>Язык:</b> {"Русский" if lang == "ru" else "O‘zbekcha"}
+🌐 <b>Язык:</b> {'Русский' if lang == 'ru' else 'O‘zbekcha'}
 📍 <b>Город:</b> {user_data[user_id]['city']}
 🏢 <b>Отдел:</b> {user_data[user_id]['department']}
 📝 <b>Сообщение:</b> {user_data[user_id]['message']}
@@ -154,7 +146,7 @@ async def save_ticket(message: types.Message):
         InlineKeyboardButton("🟢 Завершено", callback_data=f"status|{ticket_number}|Завершено"),
         InlineKeyboardButton("🔴 Отклонено", callback_data=f"status|{ticket_number}|Отклонено")
     )
-    await bot.send_message(admin_chat_id, text, reply_markup=keyboard)
+    await bot.send_message(admin_chat_id, msg, reply_markup=keyboard)
 
 # ---------------- ОТВЕТ /reply 00001 текст ----------------
 @dp.message_handler(lambda m: m.chat.id == -4680581564 and m.text.startswith("/reply"))
