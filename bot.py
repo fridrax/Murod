@@ -149,7 +149,7 @@ async def reply_to_user(message: types.Message):
         await message.reply("❌ Тикет не найден.")
         return
     user_id = row["user_id"]
-    await bot.send_message(user_id, f"📩 Ответ по тикету №{ticket_number}:
+    await bot.send_message(user_id, f"📩 Ответ по тикету №{ticket_number}:\n\n{reply_text}")
 
 {reply_text}")
     await conn.execute("UPDATE tickets SET reply = $1 WHERE ticket_number = $2", reply_text, ticket_number)
