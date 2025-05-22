@@ -92,9 +92,16 @@ async def ask_department(message: types.Message):
     keyboard.add(KeyboardButton("✍️ Ввести вручную" if lang == "ru" else "✍️ Qo‘lda kiritish"))
     await message.answer(text, reply_markup=keyboard)
 
-@dp.message_handler(lambda message: message.text == "📝 Оставить заявку")
+@dp.message_handler(lambda message: message.text == "📝 Оставить заявку" or message.text == "📩 Murojaat qoldirish")
 async def handle_new_ticket(message: types.Message):
-    await start(message)  # запускаем заново /start
+    user_id = message.from_user.id
+    lang = user_data.get(user_id, {}).get("lang", "ru")  # fallback
+
+    user_data[user_id] = {"lang": lang}
+    user_state[user_id] = "city"
+
+    text = "📍 Укажите ваш город:" if lang == "ru" else "📍 Shahringizni kiriting:"
+    await message.answer(text)
 
 @dp.message_handler(lambda message: message.text == "📋 Статус заявки")
 async def handle_ticket_status(message: types.Message):
