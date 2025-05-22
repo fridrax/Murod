@@ -49,18 +49,36 @@ async def start(message: types.Message):
         InlineKeyboardButton(text="🇷🇺 Русский", callback_data="lang_ru"),
         InlineKeyboardButton(text="🇺🇿 Oʻzbekcha", callback_data="lang_uz")
     )
-    await message.answer("\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u044f\u0437\u044b\u043a / Tilni tanlang:", reply_markup=keyboard)
-    await message.answer("👇 Выберите действие:", reply_markup=main_menu())
+    await message.answer("Выберите язык / Tilni tanlang:", reply_markup=keyboard)
 
 @dp.callback_query_handler(lambda c: c.data.startswith("lang_"))
 async def set_language(callback: types.CallbackQuery):
     lang = callback.data.split("_")[1]
     user_id = callback.from_user.id
     user_data[user_id] = {"lang": lang}
-    user_state[user_id] = "city"
+    user_state[user_id] = None  # пока не в процессе ввода
+
     await callback.message.edit_reply_markup()
-    text = "📍 Укажите ваш город:" if lang == "ru" else "📍 Shahringizni kiriting:"
-    await callback.message.answer(text, reply_markup=main_menu())
+
+    # Текст в зависимости от языка
+    text = "👇 Выберите действие:" if lang == "ru" else "👇 Amalni tanlang:"
+
+    # Меню
+    menu = ReplyKeyboardMarkup(resize_keyboard=True)
+    if lang == "ru":
+        menu.add(
+            KeyboardButton("📩 Оставить заявку"),
+            KeyboardButton("📊 Статус заявки"),
+        )
+        menu.add(KeyboardButton("⚙️ Настройки"))
+    else:
+        menu.add(
+            KeyboardButton("📩 Murojaat qoldirish"),
+            KeyboardButton("📊 Murojaat holati"),
+        )
+        menu.add(KeyboardButton("⚙️ Sozlamalar"))
+
+    await callback.message.answer(text, reply_markup=menu)
 
 @dp.message_handler(lambda message: user_state.get(message.from_user.id) == "city")
 async def ask_department(message: types.Message):
