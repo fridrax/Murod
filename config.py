@@ -1,1 +1,5 @@
+import os
 
+BOT_TOKEN = "7548380199:AAGOJwrxWmzuZCEnloeSQ3NW0TbUJZgGvS4"
+DATABASE_URL = os.getenv("DATABASE_URL")
+ADMIN_CHAT_ID = -4680581564  # твоя группа
