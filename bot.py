@@ -146,71 +146,51 @@ async def ask_problem(message: types.Message):
     text = "📝 Опишите проблему:" if lang == "ru" else "📝 Muammoni batafsil yozing:"
     keyboard = ReplyKeyboardMarkup(resize_keyboard=True).add(KeyboardButton("◀️ Назад"))
     await message.answer(text, reply_markup=keyboard)
-
-
+    
 @dp.message_handler(lambda m: user_state.get(m.from_user.id) == "problem")
 async def save_ticket(message: types.Message):
     user_id = message.from_user.id
     user_data[user_id]["message"] = message.text
     lang = user_data[user_id]["lang"]
 
-    # Сохраняем заявку
-    try:
-        conn = await asyncpg.connect(DATABASE_URL)
-        count = await conn.fetchval("SELECT COUNT(*) FROM tickets")
-        ticket_number = str(count + 1).zfill(5)
+    conn = await asyncpg.connect(DATABASE_URL)
+    count = await conn.fetchval("SELECT COUNT(*) FROM tickets")
+    ticket_number = str(count + 1).zfill(5)
 
-        await conn.execute('''
-            INSERT INTO tickets (user_id, lang, city, department, message, ticket_number, status)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
-        ''', user_id, lang, user_data[user_id]["city"], user_data[user_id]["department"], user_data[user_id]["message"], ticket_number, "Новая")
-        await conn.close()
-    except Exception as e:
-        await message.answer("❌ Ошибка при сохранении заявки." if lang == "ru" else "❌ Murojaatni saqlashda xatolik yuz berdi.")
-        print("Ошибка сохранения в БД:", e)
-        return
+    await conn.execute('''
+        INSERT INTO tickets (user_id, lang, city, department, message, ticket_number, status)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+    ''', user_id, lang, user_data[user_id]["city"], user_data[user_id]["department"],
+         user_data[user_id]["message"], ticket_number, "Новая")
+    await conn.close()
 
-    # Подтверждение
     confirm = (
         f"✅ Ваше обращение зарегистрировано под номером №{ticket_number}" if lang == "ru"
         else f"✅ Murojaatingiz №{ticket_number} raqam bilan ro'yxatga olindi."
     )
     await message.answer(confirm, reply_markup=ReplyKeyboardRemove())
-
-    # Очистка состояния
     user_state.pop(user_id, None)
 
-    # ---------------- УВЕДОМЛЕНИЕ В ГРУППУ ----------------
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from datetime import datetime
-import html
-
-admin_chat_id = -4680581564
-
-# Экранируем текст, чтобы избежать ошибок от HTML
-city = html.escape(user_data[user_id]['city'])
-department = html.escape(user_data[user_id]['department'])
-user_message = html.escape(user_data[user_id]['message'])
-
-msg = f"""
+    # 🟢 Уведомление в группу — ВНУТРИ async-функции
+    msg = f"""
 📨 <b>Новая заявка</b>
 🗓 <b>Дата:</b> {datetime.now().strftime('%Y-%m-%d %H:%M')}
 🎫 <b>Номер:</b> №{ticket_number}
 🌐 <b>Язык:</b> {'Русский' if lang == 'ru' else 'O‘zbekcha'}
-📍 <b>Город:</b> {city}
-🏢 <b>Отдел:</b> {department}
-📝 <b>Сообщение:</b> {user_message}
+📍 <b>Город:</b> {html.escape(user_data[user_id]['city'])}
+🏢 <b>Отдел:</b> {html.escape(user_data[user_id]['department'])}
+📝 <b>Сообщение:</b> {html.escape(user_data[user_id]['message'])}
 """.strip()
 
-keyboard = InlineKeyboardMarkup(row_width=2)
-keyboard.add(
-    InlineKeyboardButton("✉️ Ответить", switch_inline_query_current_chat=f"/reply {ticket_number}"),
-    InlineKeyboardButton("🟡 В работу", callback_data=f"status|{ticket_number}|В работе"),
-    InlineKeyboardButton("🟢 Завершено", callback_data=f"status|{ticket_number}|Завершено"),
-    InlineKeyboardButton("🔴 Отклонено", callback_data=f"status|{ticket_number}|Отклонено")
-)
+    keyboard = InlineKeyboardMarkup(row_width=2)
+    keyboard.add(
+        InlineKeyboardButton("✉️ Ответить", switch_inline_query_current_chat=f"/reply {ticket_number}"),
+        InlineKeyboardButton("🟡 В работу", callback_data=f"status|{ticket_number}|В работе"),
+        InlineKeyboardButton("🟢 Завершено", callback_data=f"status|{ticket_number}|Завершено"),
+        InlineKeyboardButton("🔴 Отклонено", callback_data=f"status|{ticket_number}|Отклонено")
+    )
 
-await bot.send_message(admin_chat_id, msg, reply_markup=keyboard)
+    await bot.send_message(admin_chat_id, msg, reply_markup=keyboard)
 
 @dp.message_handler(lambda m: m.chat.id == -4680581564 and m.text.startswith("/reply"))
 async def reply_to_user(message: types.Message):
