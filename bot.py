@@ -202,3 +202,10 @@ async def handle_status_change(callback: types.CallbackQuery):
     await callback.answer()
     await callback.message.edit_reply_markup()
     await callback.message.answer(f"✅ Статус заявки <b>{ticket_number}</b> обновлён на <b>{new_status}</b>", parse_mode="HTML")
+
+async def main():
+    await init_db()
+    await dp.start_polling()
+
+if __name__ == "__main__":
+    asyncio.run(main())
