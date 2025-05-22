@@ -71,6 +71,35 @@ async def ask_problem(message: types.Message):
     text = "📝 Подробно опишите проблему:" if lang == "ru" else "📝 Muammoni batafsil yozing:"
     await message.answer(text, reply_markup=ReplyKeyboardRemove())
 
+@dp.message_handler(commands=["mytickets"])
+async def show_user_tickets(message: types.Message):
+    user_id = message.from_user.id
+
+    conn = await asyncpg.connect(DATABASE_URL)
+    rows = await conn.fetch("""
+        SELECT ticket_number, created_at, message, status
+        FROM tickets
+        WHERE user_id = $1
+        ORDER BY created_at DESC
+        LIMIT 10
+    """, user_id)
+    await conn.close()
+
+    if not rows:
+        await message.answer("❗️У вас пока нет обращений.")
+        return
+
+    text = "🗃 <b>Ваши последние обращения:</b>\n\n"
+    for row in rows:
+        msg_preview = row["message"][:100]
+        text += (
+            f"<b>{row['ticket_number']}</b> — {row['created_at'].strftime('%Y-%m-%d %H:%M')}\n"
+            f"📝 {msg_preview}\n"
+            f"📌 Статус: <i>{row['status']}</i>\n\n"
+        )
+
+    await message.answer(text.strip(), parse_mode="HTML")
+
 @dp.message_handler(lambda message: user_state.get(message.from_user.id) == "problem")
 async def save_ticket(message: types.Message):
     user_id = message.from_user.id
