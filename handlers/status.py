@@ -1,43 +1,39 @@
-import asyncpg
-import html
-from loader import dp
-from config import DATABASE_URL
 from aiogram import types
-from data import user_data  # ✅ правильный импорт
+from handlers.start import user_data
+import sqlite3
 
-@dp.message_handler(lambda m: m.text in ["📋 Статус заявки", "📊 Murojaat holati"])
 async def show_status(message: types.Message):
+    """Retrieve the list of user’s tickets from the database and send to the user."""
     user_id = message.from_user.id
-    if user_id not in user_data:
-        user_data[user_id] = {"lang": "ru"}  # если пользователь неизвестен
+    # Determine user's language (default to Russian if not set)
+    lang = user_data.get(user_id, {}).get("lang", "ru")
 
-    lang = user_data[user_id]["lang"]
+    # Query the database for this user's tickets
+    conn = sqlite3.connect("database.db")
+    cur = conn.cursor()
+    cur.execute("SELECT id, status FROM tickets WHERE user_id=?", (user_id,))
+    records = cur.fetchall()
+    conn.close()
 
-    try:
-        conn = await asyncpg.connect(DATABASE_URL)
-        rows = await conn.fetch(
-            "SELECT * FROM tickets WHERE user_id = $1 ORDER BY created_at DESC LIMIT 10",
-            user_id
-        )
-        await conn.close()
-    except Exception as e:
-        print("Ошибка при получении заявок:", e)
-        await message.answer("❌ Ошибка при загрузке заявок." if lang == "ru" else "❌ So'rovlarni yuklashda xatolik.")
-        return
-
-    if not rows:
-        await message.answer("❗️ У вас пока нет заявок." if lang == "ru" else "❗️ Sizda hali hech qanday murojaat yo'q.")
-        return
-
-    text = "🗂 <b>Последние заявки:</b>\n\n" if lang == "ru" else "🗂 <b>So‘nggi murojaatlar:</b>\n\n"
-    for row in rows:
-        msg = html.escape(row["message"])
-        status = html.escape(row["status"])
-        created = row["created_at"].strftime("%Y-%m-%d %H:%M")
-        text += (
-            f"<b>№{row['ticket_number']}</b> — {created}\n"
-            f"📌 Статус: <i>{status}</i>\n"
-            f"📝 {msg[:100]}...\n\n"
-        )
-
-    await message.answer(text, parse_mode="HTML")
+    if not records:
+        # No tickets found for this user
+        if lang == "ru":
+            await message.answer("❗ Вы еще не оставляли заявок.")
+        else:
+            await message.answer("❗ Siz hali birorta murojaat qoldirmagansiz.")
+    else:
+        # Build the response listing each ticket with its status
+        if lang == "ru":
+            header = "📋 *Список ваших заявок:*\n"
+        else:
+            header = "📋 *Murojaatlaringiz ro‘yxati:*\n"
+        lines = []
+        for ticket_id, status in records:
+            ticket_no = f"№{ticket_id:05d}"
+            if status:
+                # If status is stored in Russian, it can be shown directly; otherwise, consider translation if needed
+                lines.append(f"{ticket_no} — {status}")
+            else:
+                lines.append(f"{ticket_no}")
+        # Send the compiled list (formatting in Markdown for bold header, if supported)
+        await message.answer(header + "\n".join(lines), parse_mode="Markdown")
