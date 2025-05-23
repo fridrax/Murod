@@ -1,4 +1,4 @@
-BOT_TOKEN = "7548380199:AAEyk1ikBky5UI2THU_bLdytJns5dwpMIq0"
+BOT_TOKEN = "7548380199:AAFLDMBARqwcwWTt2I_OugjXwciGov-7cXg"
 
 DATABASE_URL = (
     "postgresql://sg_hotline_db_user:Edqwmk2EvU2gN6IOXTAG2jEw6NoOTRb0@dpg-d0n14t51spdvs7386kdio-a/sg_hotline_db"
