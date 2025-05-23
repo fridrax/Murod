@@ -5,11 +5,13 @@ from aiogram import types
 from aiogram.types import ReplyKeyboardRemove, InlineKeyboardMarkup, InlineKeyboardButton
 from loader import dp, bot
 from config import DATABASE_URL, ADMIN_CHAT_ID
-from keyboards import departments_keyboard
+from keyboards import departments_keyboard, main_menu
 from handlers.start import user_data, user_state
 
 @dp.message_handler(lambda m: m.text in ["📝 Оставить заявку", "📝 Murojaat qoldirish"])
 async def new_ticket(message: types.Message):
+    if message.chat.type != "private": return
+
     user_id = message.from_user.id
     lang = user_data.get(user_id, {}).get("lang", "ru")
 
@@ -27,36 +29,43 @@ async def new_ticket(message: types.Message):
 
 @dp.message_handler(lambda m: m.text == "◀️ Назад")
 async def go_back(message: types.Message):
+    if message.chat.type != "private": return
+
     user_id = message.from_user.id
     lang = user_data.get(user_id, {}).get("lang", "ru")
     user_state[user_id] = None
-    from keyboards import main_menu
     await message.answer("🔻 Выберите действие:" if lang == "ru" else "🔻 Amalni tanlang:", reply_markup=main_menu(lang))
 
 @dp.message_handler(lambda m: user_state.get(m.from_user.id) == "city")
 async def ask_department(message: types.Message):
+    if message.chat.type != "private": return
+
     user_id = message.from_user.id
     user_data[user_id]["city"] = message.text
     user_state[user_id] = "department"
     lang = user_data[user_id]["lang"]
+
     text = (
-    "🏢 Выберите отдел из списка или введите вручную:"
-    if lang == "ru" else
-    "🏢 Bo‘limni tanlang yoki o‘zingiz yozing:"
-)
-await message.answer(text, reply_markup=departments_keyboard(lang))
+        "🏢 Выберите отдел из списка или введите вручную:" if lang == "ru"
+        else "🏢 Bo‘limni tanlang yoki o‘zingiz yozing:"
+    )
+    await message.answer(text, reply_markup=departments_keyboard(lang))
 
 @dp.message_handler(lambda m: user_state.get(m.from_user.id) == "department")
 async def ask_problem(message: types.Message):
+    if message.chat.type != "private": return
+
     user_id = message.from_user.id
     user_data[user_id]["department"] = message.text
     user_state[user_id] = "problem"
     lang = user_data[user_id]["lang"]
     kb = types.ReplyKeyboardMarkup(resize_keyboard=True).add(types.KeyboardButton("◀️ Назад"))
-    await message.answer("📝 Опишите проблему:" if lang == "ru" else "📝 Muammoni batafsil yozing:", reply_markup=kb)
+    await message.answer("\ud83d\udcdd \u041e\u043f\u0438\u0448\u0438\u0442\u0435 \u043f\u0440\u043e\u0431\u043b\u0435\u043c\u0443:" if lang == "ru" else "\ud83d\udcdd Muammoni batafsil yozing:", reply_markup=kb)
 
 @dp.message_handler(lambda m: user_state.get(m.from_user.id) == "problem")
 async def save_ticket(message: types.Message):
+    if message.chat.type != "private": return
+
     user_id = message.from_user.id
     user_data[user_id]["message"] = message.text
     lang = user_data[user_id]["lang"]
@@ -78,9 +87,7 @@ async def save_ticket(message: types.Message):
         reply_markup=ReplyKeyboardRemove()
     )
     user_state.pop(user_id, None)
-
-    from keyboards import main_menu
-    await message.answer("🔻 Выберите действие:", reply_markup=main_menu(lang))
+    await message.answer("\ud83d\udd3b \u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u0435:" if lang == "ru" else "\ud83d\udd3b Amalni tanlang:", reply_markup=main_menu(lang))
 
     msg = f"""
 📨 <b>Новая заявка</b>
@@ -89,7 +96,7 @@ async def save_ticket(message: types.Message):
 🌐 <b>Язык:</b> {'Русский' if lang == 'ru' else 'O‘zbekcha'}
 📍 <b>Город:</b> {html.escape(user_data[user_id]['city'])}
 🏢 <b>Отдел:</b> {html.escape(user_data[user_id]['department'])}
-📝 <b>Сообщение:</b> {html.escape(user_data[user_id]['message'])}
+📜 <b>Сообщение:</b> {html.escape(user_data[user_id]['message'])}
 """.strip()
 
     keyboard = InlineKeyboardMarkup(row_width=2)
