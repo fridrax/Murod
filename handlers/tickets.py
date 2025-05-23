@@ -112,3 +112,14 @@ async def save_ticket(message: types.Message):
     )
 
     await bot.send_message(ADMIN_CHAT_ID, msg, reply_markup=keyboard)
+
+@dp.message_handler(lambda m: m.text == "🔙 Назад")
+async def handle_back(message: types.Message):
+    user_id = message.from_user.id
+    lang = user_data.get(user_id, {}).get("lang", "ru")
+
+    user_state[user_id] = None
+    await message.answer(
+        "🔻 Выберите действие:" if lang == "ru" else "🔻 Amalni tanlang:",
+        reply_markup=main_menu(lang)
+    )
