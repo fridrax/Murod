@@ -35,5 +35,6 @@ async def handle_status_request(message: types.Message):
     user_id = message.from_user.id
     if user_id not in user_data:
         user_data[user_id] = {"lang": "ru"}
+
     from handlers.status import show_status
     await show_status(message)
