@@ -26,12 +26,11 @@ async def set_language(callback: CallbackQuery):
 
     await callback.message.edit_reply_markup()
     await callback.answer()
-
     await callback.message.answer(
         "🔻 Выберите действие:" if lang == "ru" else "🔻 Amalni tanlang:",
         reply_markup=main_menu(lang)
     )
-
+    
 @dp.message_handler(lambda m: m.text in ["📊 Статус заявки", "📊 Murojaat holati"])
 async def handle_status_request(message: types.Message):
     user_id = message.from_user.id
