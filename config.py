@@ -5,4 +5,3 @@ DATABASE_URL = (
 )
 
 ADMIN_CHAT_ID = -4688581564
-postgresql://sg_hotline_db_user:EdqwmK2EvU2gN6IOXTAG2jEw6oNoTR6b@dpg-d0n14515pdvs7386kdi0-a/sg_hotline_db
