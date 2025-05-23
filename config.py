@@ -1,8 +1,7 @@
-import os
-from dotenv import load_dotenv
+BOT_TOKEN = "7548380199:AAEyk1ikBky5UI2THU_bLdytJns5dwpMIq0"
 
-load_dotenv()
+DATABASE_URL = (
+    "postgresql://sg_hotline_db_user:Edqwmk2EvU2gN6IOXTAG2jEw6NoOTRb0@dpg-d0n14t51spdvs7386kdio-a/sg_hotline_db"
+)
 
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-DATABASE_URL = os.getenv("DATABASE_URL")
-ADMIN_CHAT_ID = int(os.getenv("ADMIN_CHAT_ID"))
+ADMIN_CHAT_ID = 4688581564
