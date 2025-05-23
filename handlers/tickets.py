@@ -6,7 +6,7 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMar
 from loader import dp, bot
 from config import DATABASE_URL, ADMIN_CHAT_ID
 from keyboards import departments_keyboard, main_menu
-from handlers.start import user_data, user_state
+from utils.state import user_data, user_state
 
 @dp.message_handler(lambda m: m.text in ["📝 Оставить заявку", "📝 Murojaat jo'natish"])
 async def create_ticket(message: types.Message):
@@ -64,7 +64,9 @@ async def save_ticket(message: types.Message):
     issue_text = user_data[user_id]["message"]
     created_at = datetime.now()
 
-    async with asyncpg.connect(DATABASE_URL) as conn:
+    conn = None
+    try:
+        conn = await asyncpg.connect(DATABASE_URL)
         ticket_number = str(await conn.fetchval("SELECT COUNT(*) FROM tickets") + 1).zfill(5)
         await conn.execute(
             '''
@@ -73,6 +75,13 @@ async def save_ticket(message: types.Message):
             ''',
             user_id, lang, city, department, issue_text, ticket_number, "Новая", created_at
         )
+    except Exception as e:
+        print("❌ Ошибка при сохранении заявки:", e)
+        await message.answer("❌ Ошибка при сохранении заявки." if lang == "ru" else "❌ Murojaatni saqlashda xatolik.")
+        return
+    finally:
+        if conn:
+            await conn.close()
 
     user_state[user_id] = None
 
@@ -83,7 +92,7 @@ async def save_ticket(message: types.Message):
     )
     await message.answer(confirm)
 
-    lang_name = "Русский" if lang == "ru" else "Узбекский"
+    lang_name = "Русский" if lang == "ru" else "O‘zbekcha"
     msg = f"""
 📨 <b>Новая заявка</b>
 🗓 <b>Дата:</b> {created_at.strftime('%Y-%m-%d %H:%M')}
