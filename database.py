@@ -2,6 +2,7 @@ import asyncpg
 from config import DATABASE_URL
 
 async def init_db():
+    conn = None
     try:
         conn = await asyncpg.connect(DATABASE_URL)
         await conn.execute('''
@@ -18,7 +19,9 @@ async def init_db():
                 created_at TIMESTAMP DEFAULT NOW()
             )
         ''')
-        await conn.close()
         print("✅ Таблица tickets проверена или создана.")
     except Exception as e:
         print(f"❌ Ошибка при подключении к базе данных: {e}")
+    finally:
+        if conn:
+            await conn.close()
