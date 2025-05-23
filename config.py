@@ -1,5 +1,8 @@
 import os
+from dotenv import load_dotenv
 
-BOT_TOKEN = "7548380199:AAEyXLikBky5UI2HTU_bLdYtJnsSdWpMIq0"
+load_dotenv()
+
+BOT_TOKEN = os.getenv("BOT_TOKEN")
 DATABASE_URL = os.getenv("DATABASE_URL")
-ADMIN_CHAT_ID = -4680581564  # твоя группа
+ADMIN_CHAT_ID = int(os.getenv("ADMIN_CHAT_ID"))
