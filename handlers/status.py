@@ -8,7 +8,10 @@ from handlers.start import user_data
 @dp.message_handler(lambda m: m.text in ["📋 Статус заявки", "📊 Murojaat holati"])
 async def show_status(message: types.Message):
     user_id = message.from_user.id
-    lang = user_data.get(user_id, {}).get("lang", "ru")
+    if user_id not in user_data:
+        user_data[user_id] = {"lang": "ru"}  # если пользователь неизвестен
+
+    lang = user_data[user_id]["lang"]
 
     try:
         conn = await asyncpg.connect(DATABASE_URL)
