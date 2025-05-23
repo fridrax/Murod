@@ -1,2 +1,2 @@
-# utils/state.py
 user_data = {}
+user_state = {}
