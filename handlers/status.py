@@ -3,7 +3,7 @@ import html
 from loader import dp
 from config import DATABASE_URL
 from aiogram import types
-from handlers.start import user_data
+from data import user_data  # ✅ правильный импорт
 
 @dp.message_handler(lambda m: m.text in ["📋 Статус заявки", "📊 Murojaat holati"])
 async def show_status(message: types.Message):
