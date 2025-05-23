@@ -1,13 +1,12 @@
-import asyncio
+from aiogram import executor
 from loader import dp
 from database import init_db
-import handlers  # подтянет все из handlers/__init__.py
-from aiogram import executor
+import handlers  # Импорт всех хендлеров через __init__.py
 
+# Функция запуска при старте бота
 async def on_startup(dispatcher):
-    await init_db()
+    await init_db()  # Инициализация подключения к БД
 
 if __name__ == "__main__":
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(init_db())  # инициализируем БД до запуска
-    executor.start_polling(dp, skip_updates=True)
+    # Стартуем бота и передаём функцию on_startup
+    executor.start_polling(dp, skip_updates=True, on_startup=on_startup)
