@@ -67,17 +67,28 @@ async def save_ticket(message: types.Message):
     conn = None
     try:
         conn = await asyncpg.connect(DATABASE_URL)
-        ticket_number = str(await conn.fetchval("SELECT COUNT(*) FROM tickets") + 1).zfill(5)
+
+        # Сохраняем заявку и получаем ID
+        ticket_id = await conn.fetchval("""
+            INSERT INTO tickets (user_id, lang, city, department, message, status, created_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            RETURNING id
+        """, user_id, lang, city, department, issue_text, "Новая", created_at)
+
+        # Генерируем уникальный номер заявки
+        ticket_number = str(ticket_id).zfill(5)
+
+        # Обновляем заявку с ticket_number
         await conn.execute(
-            '''
-            INSERT INTO tickets (user_id, lang, city, department, message, ticket_number, status, created_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-            ''',
-            user_id, lang, city, department, issue_text, ticket_number, "Новая", created_at
+            "UPDATE tickets SET ticket_number = $1 WHERE id = $2",
+            ticket_number, ticket_id
         )
+
     except Exception as e:
         print("❌ Ошибка при сохранении заявки:", e)
-        await message.answer("❌ Ошибка при сохранении заявки." if lang == "ru" else "❌ Murojaatni saqlashda xatolik.")
+        await message.answer(
+            "❌ Ошибка при сохранении заявки." if lang == "ru" else "❌ Murojaatni saqlashda xatolik."
+        )
         return
     finally:
         if conn:
