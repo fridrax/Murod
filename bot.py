@@ -25,7 +25,7 @@ async def init_db():
             department TEXT,
             message TEXT,
             ticket_number TEXT,
-             TEXT,
+            status TEXT,
             reply TEXT,
             created_at TIMESTAMP DEFAULT NOW()
         )
