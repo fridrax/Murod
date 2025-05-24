@@ -236,7 +236,7 @@ async def update_status(callback: types.CallbackQuery):
 📝 <b>Сообщение:</b> {row['message']}
 📌 <b>Статус:</b> <i>{status_text}</i>
 """.strip()
-    if row.get('reply'):
+if row.get('reply'):
     text += f"\n💬 <b>Ответ:</b> {row['reply']}"
 
     keyboard = InlineKeyboardMarkup(row_width=2)
