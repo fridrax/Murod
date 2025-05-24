@@ -235,9 +235,8 @@ async def update_status(callback: types.CallbackQuery):
 🏢 <b>Отдел:</b> {row['department']}
 📝 <b>Сообщение:</b> {row['message']}
 📌 <b>Статус:</b> <i>{status_text}</i>
+💬 <b>Ответ:</b> {row['reply'] or "Пока без ответа"}
 """.strip()
-    if row.get('reply'):
-        text += f"\n💬 <b>Ответ:</b> {row['reply']}"
 
     keyboard = InlineKeyboardMarkup(row_width=2)
     keyboard.add(
@@ -259,7 +258,7 @@ async def reply_user(message: types.Message):
 
     ticket_number, reply_text = parts[1], parts[2]
     conn = await asyncpg.connect(DATABASE_URL)
-    row = await conn.fetchrow("SELECT * FROM tickets WHERE ticket_number = $1", ticket_number)
+    row = await conn.fetchrow("SELECT user_id FROM tickets WHERE ticket_number = $1", ticket_number)
     if not row:
         await message.reply("❌ Тикет не найден.")
         await conn.close()
@@ -268,38 +267,6 @@ async def reply_user(message: types.Message):
     try:
         await bot.send_message(user_id, f"📩 Ответ по тикету №{ticket_number}:\n\n{reply_text}")
         await conn.execute("UPDATE tickets SET reply = $1 WHERE ticket_number = $2", reply_text, ticket_number)
-
-        # Собираем новый текст для сообщения в группе:
-        status_text = {
-            "Новая": "🟢 Новая",
-            "В работе": "🟡 В работе",
-            "Завершено": "✅ Завершено",
-            "Отклонено": "🔴 Отклонено"
-        }.get(row['status'], row['status'])
-
-        text = f"""
-📨 <b>Новая заявка</b>
-🗓 <b>Дата:</b> {row['created_at'].strftime('%Y-%m-%d %H:%M')}
-🎫 <b>Номер:</b> №{row['ticket_number']}
-🌐 <b>Язык:</b> {"Русский" if row['lang'] == "ru" else "O‘zbekcha"}
-📍 <b>Город:</b> {row['city']}
-🏢 <b>Отдел:</b> {row['department']}
-📝 <b>Сообщение:</b> {row['message']}
-📌 <b>Статус:</b> <i>{status_text}</i>
-💬 <b>Ответ:</b> {row['reply'] or "Без ответа"}
-""".strip()
-        keyboard = InlineKeyboardMarkup(row_width=2)
-        keyboard.add(
-            InlineKeyboardButton("✉️ Ответить", switch_inline_query_current_chat=f"/reply {ticket_number}"),
-            InlineKeyboardButton("🟡 В работу", callback_data=f"status|{ticket_number}|В работе"),
-            InlineKeyboardButton("🟢 Завершено", callback_data=f"status|{ticket_number}|Завершено"),
-            InlineKeyboardButton("🔴 Отклонено", callback_data=f"status|{ticket_number}|Отклонено")
-        )
-
-        # Обновляем сообщение в группе (reply_to_message — это и есть заявка)
-        if message.reply_to_message:
-            await message.reply_to_message.edit_text(text, reply_markup=keyboard, parse_mode="HTML")
-
         await message.reply("✅ Ответ успешно отправлен пользователю.")
     except Exception as e:
         await message.reply(f"❌ Ошибка отправки ответа: {e}")
