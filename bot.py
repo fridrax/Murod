@@ -6,7 +6,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeybo
 from datetime import datetime
 
 BOT_TOKEN = "7548380199:AAFrTiLUGVcN1lIQ3t2pCZ8JZlgcwAnYe0c"
-DATABASE_URL = "postgresql://sg_hotline_db_user:Edqwmk2EvU2gN6IOXTAG2jEw6NoOTRb0@dpg-d0n14t51spdvs7386kdio-a.oregon-postgres.render.com/sg_hotline_db"
+DATABASE_URL = "postgresql://sg_hotline_db_user:Edqwmk2EvU2gN6IOXTAG2jEw6NoOTRb0@dpg-d0n14t51spdvs7386kdio-a.oregon-postgres.render.com/sg_hotline_db?sslmode=require"
 
 bot = Bot(token=BOT_TOKEN, parse_mode="HTML")
 dp = Dispatcher(bot)
