@@ -5,7 +5,7 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
 from datetime import datetime
 
-BOT_TOKEN = "7548380199:AAGLtrFnvVoljcA_1PImhIfyFBIfrjA0B-c"
+BOT_TOKEN = "7548380199:AAH326ZYACIklbqm32Hlsqq-WxUidfTuq2Q"
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 bot = Bot(token=BOT_TOKEN, parse_mode="HTML")
@@ -286,10 +286,8 @@ async def reply_user(message: types.Message):
 🏢 <b>Отдел:</b> {row['department']}
 📝 <b>Сообщение:</b> {row['message']}
 📌 <b>Статус:</b> <i>{status_text}</i>
+💬 <b>Ответ:</b> {row['reply'] or "Без ответа"}
 """.strip()
-        if reply_text:
-            text += f"\n💬 <b>Ответ:</b> {reply_text}"
-
         keyboard = InlineKeyboardMarkup(row_width=2)
         keyboard.add(
             InlineKeyboardButton("✉️ Ответить", switch_inline_query_current_chat=f"/reply {ticket_number}"),
