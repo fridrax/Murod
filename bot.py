@@ -5,7 +5,7 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
 from datetime import datetime
 
-BOT_TOKEN = "7548380199:AAFtQrJUFT1zaM0kacXifpmeXtrDvqxzsXc"
+BOT_TOKEN = "7548380199:AAHM_1x2BObercvZGtuw4mD1qEDWlGcct5o"
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 bot = Bot(token=BOT_TOKEN, parse_mode="HTML")
@@ -192,6 +192,80 @@ async def show_status(message: types.Message):
         )
     await message.answer(text, parse_mode="HTML", reply_markup=main_menu_keyboard(lang))
 
+@dp.callback_query_handler(lambda c: c.data.startswith("status|"))
+async def update_status(callback: types.CallbackQuery):
+    _, ticket_number, new_status = callback.data.split("|")
+    # Обновляем статус в базе
+    conn = await asyncpg.connect(DATABASE_URL)
+    await conn.execute("UPDATE tickets SET status=$1 WHERE ticket_number=$2", new_status, ticket_number)
+    row = await conn.fetchrow("SELECT * FROM tickets WHERE ticket_number=$1", ticket_number)
+    await conn.close()
+
+    # --- Уведомление пользователя о смене статуса ---
+    user_id = row['user_id']
+    lang = row['lang']
+    status_notify = {
+        "В работе": "⏳ Ваша заявка принята в работу.",
+        "Завершено": "✅ Ваша заявка успешно завершена.",
+        "Отклонено": "❌ Ваша заявка отклонена.",
+    }
+    status_notify_uz = {
+        "В работе": "⏳ Murojaatingiz ko'rib chiqilmoqda.",
+        "Завершено": "✅ Murojaatingiz muvaffaqiyatli yakunlandi.",
+        "Отклонено": "❌ Murojaatingiz rad etildi.",
+    }
+    notify = status_notify.get(new_status) if lang == "ru" else status_notify_uz.get(new_status)
+    if notify:
+        await bot.send_message(user_id, notify)
+
+    # --- Формируем новое сообщение в группе с обновлённым статусом ---
+    status_text = {
+        "Новая": "🟢 Новая",
+        "В работе": "🟡 В работе",
+        "Завершено": "✅ Завершено",
+        "Отклонено": "🔴 Отклонено"
+    }.get(new_status, new_status)
+
+    text = f"""
+📨 <b>Новая заявка</b>
+🗓 <b>Дата:</b> {row['created_at'].strftime('%Y-%m-%d %H:%M')}
+🎫 <b>Номер:</b> №{row['ticket_number']}
+🌐 <b>Язык:</b> {"Русский" if row['lang'] == "ru" else "O‘zbekcha"}
+📍 <b>Город:</b> {row['city']}
+🏢 <b>Отдел:</b> {row['department']}
+📝 <b>Сообщение:</b> {row['message']}
+📌 <b>Статус:</b> <i>{status_text}</i>
+""".strip()
+
+    keyboard = InlineKeyboardMarkup(row_width=2)
+    keyboard.add(
+        InlineKeyboardButton("✉️ Ответить", switch_inline_query_current_chat=f"/reply {ticket_number}"),
+        InlineKeyboardButton("🟡 В работу", callback_data=f"status|{ticket_number}|В работе"),
+        InlineKeyboardButton("🟢 Завершено", callback_data=f"status|{ticket_number}|Завершено"),
+        InlineKeyboardButton("🔴 Отклонено", callback_data=f"status|{ticket_number}|Отклонено")
+    )
+    # Обновляем сообщение в группе
+    await callback.message.edit_text(text, reply_markup=keyboard, parse_mode="HTML")
+    await callback.answer("Статус изменен!")
+
+@dp.message_handler(lambda m: m.chat.id == -4680581564 and m.text.startswith("/reply"))
+async def reply_user(message: types.Message):
+    parts = message.text.split(" ", 2)
+    if len(parts) < 3:
+        await message.reply("⚠️ Формат: /reply 00001 текст")
+        return
+    ticket_number, reply_text = parts[1], parts[2]
+    conn = await asyncpg.connect(DATABASE_URL)
+    row = await conn.fetchrow("SELECT user_id FROM tickets WHERE ticket_number = $1", ticket_number)
+    if not row:
+        await message.reply("❌ Тикет не найден.")
+        await conn.close()
+        return
+    user_id = row["user_id"]
+    await bot.send_message(user_id, f"📩 Ответ по тикету №{ticket_number}:\n\n{reply_text}")
+    await conn.execute("UPDATE tickets SET reply = $1 WHERE ticket_number = $2", reply_text, ticket_number)
+    await conn.close()
+    await message.reply("✅ Ответ отправлен.")
 # Для запуска и инициализации базы
 async def main():
     await init_db()
