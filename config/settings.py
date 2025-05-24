@@ -1,15 +1,9 @@
-import os
 from aiogram import Bot, Dispatcher
-from dotenv import load_dotenv
 
-# Загружаем переменные окружения
-load_dotenv()
+# Задаём переменные вручную
+BOT_TOKEN = "7548380199:AAFrTiLUGVcN1lIQ3t2pCZ8JZlgcwAnYe0c"
+DATABASE_URL = "postgres://sg_hotline_user:EqdmK2EVuZGI0XTA6qTFJEW60NotR6dp@dbn-15l5pvs73k6diq-sg.hotline.db/sg_hotline_db"
 
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-DATABASE_URL = os.getenv("DATABASE_URL")
-
-if not BOT_TOKEN or not DATABASE_URL:
-    raise ValueError("BOT_TOKEN and DATABASE_URL must be set in environment variables")
-
+# Создаём экземпляры бота и диспетчера
 bot = Bot(token=BOT_TOKEN, parse_mode="HTML")
 dp = Dispatcher(bot)
