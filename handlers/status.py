@@ -3,21 +3,20 @@ import html
 from aiogram import types
 from aiogram.dispatcher import Dispatcher
 
-# ПРЯМОЕ подключение к базе
+# Прямое подключение к базе (НЕ через config.py, а руками)
 DATABASE_URL = "postgresql://sg_hotline_db_user:EdqwmK2EvU2gN6IOXTAG2jEw6NoTR6b@dpg-d0n14515pdvs7386kdi0-a/sg_hotline_db"
 
-# ЛОКАЛЬНЫЙ state (для теста, только в этом файле)
+# Локальный state — тестовый, только для этого файла
 user_data = {}
 
 def register_handlers(dp: Dispatcher):
-    @dp.message_handler(lambda m: m.text in ["📋 Статус заявки", "📊 Murojaat holati"])
+    @dp.message_handler(lambda m: m.text in ["📊 Статус заявки", "📊 Murojaat holati"])
     async def show_status(message: types.Message):
         user_id = message.from_user.id
 
-        # Только для теста! Присваиваем язык (можно изменить)
+        # Для теста — если нет языка, ставим по умолчанию русский
         if user_id not in user_data:
-            user_data[user_id] = {"lang": "ru"}  # по умолчанию русский
-
+            user_data[user_id] = {"lang": "ru"}
         lang = user_data[user_id]["lang"]
 
         conn = None
@@ -29,24 +28,20 @@ def register_handlers(dp: Dispatcher):
             )
         except Exception as e:
             print("❌ Ошибка при получении заявок:", e)
-            await message.answer(
-                "❌ Ошибка при загрузке заявок." if lang == "ru" else "❌ So‘rovlarni yuklashda xatolik."
-            )
+            await message.answer("❌ Ошибка при загрузке заявок." if lang == "ru" else "❌ So‘rovlarni yuklashda xatolik.")
             return
         finally:
             if conn:
                 await conn.close()
 
         if not rows:
-            await message.answer(
-                "❗️ У вас пока нет заявок." if lang == "ru" else "❗️ Sizda hali hech qanday murojaat yo'q."
-            )
+            await message.answer("❗️ У вас пока нет заявок." if lang == "ru" else "❗️ Sizda hali hech qanday murojaat yo'q.")
             return
 
         header = "📋 <b>Список ваших заявок:</b>\n\n" if lang == "ru" else "📋 <b>Murojaatlaringiz ro‘yxati:</b>\n\n"
         body = ""
         for row in rows:
-            number = row["ticket_number"]
+            number = html.escape(row["ticket_number"])
             status = html.escape(row["status"])
             body += f"🎫 <b>№{number}</b> — <i>{status}</i>\n"
 
