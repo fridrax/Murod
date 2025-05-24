@@ -5,7 +5,7 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
 from datetime import datetime
 
-BOT_TOKEN = "7548380199:AAHM_1x2BObercvZGtuw4mD1qEDWlGcct5o"
+BOT_TOKEN = "7548380199:AAGv4pzjDxQmNtcDO3OgF79ANb7eMS-NPgs"
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 bot = Bot(token=BOT_TOKEN, parse_mode="HTML")
@@ -236,6 +236,8 @@ async def update_status(callback: types.CallbackQuery):
 📝 <b>Сообщение:</b> {row['message']}
 📌 <b>Статус:</b> <i>{status_text}</i>
 """.strip()
+    if row.get('reply'):
+    text += f"\n💬 <b>Ответ:</b> {row['reply']}"
 
     keyboard = InlineKeyboardMarkup(row_width=2)
     keyboard.add(
@@ -254,6 +256,7 @@ async def reply_user(message: types.Message):
     if len(parts) < 3:
         await message.reply("⚠️ Формат: /reply 00001 текст")
         return
+
     ticket_number, reply_text = parts[1], parts[2]
     conn = await asyncpg.connect(DATABASE_URL)
     row = await conn.fetchrow("SELECT user_id FROM tickets WHERE ticket_number = $1", ticket_number)
@@ -262,10 +265,13 @@ async def reply_user(message: types.Message):
         await conn.close()
         return
     user_id = row["user_id"]
-    await bot.send_message(user_id, f"📩 Ответ по тикету №{ticket_number}:\n\n{reply_text}")
-    await conn.execute("UPDATE tickets SET reply = $1 WHERE ticket_number = $2", reply_text, ticket_number)
+    try:
+        await bot.send_message(user_id, f"📩 Ответ по тикету №{ticket_number}:\n\n{reply_text}")
+        await conn.execute("UPDATE tickets SET reply = $1 WHERE ticket_number = $2", reply_text, ticket_number)
+        await message.reply("✅ Ответ успешно отправлен пользователю.")
+    except Exception as e:
+        await message.reply(f"❌ Ошибка отправки ответа: {e}")
     await conn.close()
-    await message.reply("✅ Ответ отправлен.")
 # Для запуска и инициализации базы
 async def main():
     await init_db()
