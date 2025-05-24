@@ -3,7 +3,7 @@ import sys
 import asyncio
 import logging
 
-# Настраиваем пути для корректных импортов
+# Настраиваем пути для импортов
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from config.settings import bot, dp
@@ -12,7 +12,6 @@ from handlers.commands import register_commands
 from handlers.tickets import register_tickets
 from handlers.admin import register_admin
 
-# Настраиваем логирование для отладки
 logging.basicConfig(level=logging.INFO)
 
 async def main():
