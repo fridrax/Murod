@@ -6,7 +6,7 @@ import logging
 # Настраиваем пути для импортов
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from config.settings import bot, dp
+from config.settings import bot, dp  # Убрали from config import BOT_TOKEN
 from database.db import init_db
 from handlers.commands import register_commands
 from handlers.tickets import register_tickets
