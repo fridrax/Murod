@@ -4,7 +4,7 @@ from database.db import DATABASE_URL
 import asyncpg
 
 def register_admin(dp):
-    @dp.message_handler(lambda m: m.chat.id == -4680581564 and m.text.startswith("/reply"))
+    @dp.message_handler(lambda m: m.chat.id == int(os.getenv("ADMIN_CHAT_ID", "-4680581564")) and m.text.startswith("/reply"))
     async def reply_user(message: types.Message):
         parts = message.text.split(" ", 2)
         if len(parts) < 3:
