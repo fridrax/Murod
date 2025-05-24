@@ -5,6 +5,7 @@ from utils.state import user_state, user_data
 from database.db import DATABASE_URL
 import asyncpg
 from datetime import datetime
+import os
 
 def register_tickets(dp):
     @dp.message_handler(lambda m: m.text in ["📝 Оставить заявку", "📝 Murojaat qoldirish"])
@@ -57,7 +58,7 @@ def register_tickets(dp):
         user_state.pop(user_id, None)
 
         # Уведомление в группу
-        admin_chat_id = -4680581564
+        admin_chat_id = int(os.getenv("ADMIN_CHAT_ID", "-4680581564"))
         text = f"""
     📨 <b>Новая заявка</b>
     🗓 <b>Дата:</b> {datetime.now().strftime('%Y-%m-%d %H:%M')}
