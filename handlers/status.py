@@ -1,12 +1,18 @@
+import os
 import asyncpg
-import html
-from aiogram import types
-from aiogram.dispatcher import Dispatcher
+import asyncio
+from aiogram import Bot, Dispatcher, types
+from aiogram.types import (InlineKeyboardMarkup, InlineKeyboardButton,
+                           ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove)
+from datetime import datetime
 
-# Прямое подключение к базе (НЕ через config.py, а руками)
-DATABASE_URL = "postgresql://sg_hotline_db_user:EdqwmK2EvU2gN6IOXTAG2jEw6NoTR6b@dpg-d0n14515pdvs7386kdi0-a/sg_hotline_db"
+BOT_TOKEN = "7548380199:AAGOJwrxWmzuZCEnloeSQ3NW0TbUJZgGvS4"
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-# Локальный state — тестовый, только для этого файла
+bot = Bot(token=BOT_TOKEN)
+dp = Dispatcher(bot)
+
+user_state = {}
 user_data = {}
 
 def register_handlers(dp: Dispatcher):
