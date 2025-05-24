@@ -5,7 +5,7 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
 from datetime import datetime
 
-BOT_TOKEN = "8012967826:AAFkqetX2hXAaJ2oCg7nF8iSFgu1pwyOhhU"
+BOT_TOKEN = "8012967826:AAHssB739Qbs1h6vvikNPtKGl069-bHXtRc"
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 bot = Bot(token=BOT_TOKEN, parse_mode="HTML")
@@ -170,6 +170,9 @@ async def save_ticket(message: types.Message):
         InlineKeyboardButton("🟢 Завершено", callback_data=f"status|{ticket_number}|Завершено"),
         InlineKeyboardButton("🔴 Отклонено", callback_data=f"status|{ticket_number}|Отклонено")
     )
+    keyboard.add(
+    InlineKeyboardButton("🔄 Обновить", callback_data=f"refresh|{ticket_number}")
+    )
     await bot.send_message(admin_chat_id, text, reply_markup=keyboard)
 
 @dp.message_handler(lambda m: m.text in ["📋 Статус заявки", "📊 Murojaat holati"])
@@ -246,6 +249,9 @@ async def update_status(callback: types.CallbackQuery):
         InlineKeyboardButton("🟢 Завершено", callback_data=f"status|{ticket_number}|Завершено"),
         InlineKeyboardButton("🔴 Отклонено", callback_data=f"status|{ticket_number}|Отклонено")
     )
+    keyboard.add(
+    InlineKeyboardButton("🔄 Обновить", callback_data=f"refresh|{ticket_number}")
+    )
     # Обновляем сообщение в группе
     await callback.message.edit_text(text, reply_markup=keyboard, parse_mode="HTML")
     await callback.answer("Статус изменен!")
@@ -297,7 +303,9 @@ async def reply_user(message: types.Message):
             InlineKeyboardButton("🟢 Завершено", callback_data=f"status|{ticket_number}|Завершено"),
             InlineKeyboardButton("🔴 Отклонено", callback_data=f"status|{ticket_number}|Отклонено")
         )
-
+        keyboard.add(
+        InlineKeyboardButton("🔄 Обновить", callback_data=f"refresh|{ticket_number}")
+        )
         # Обновить сообщение в группе, если команда была ответом на заявку
         if message.reply_to_message:
             await message.reply_to_message.edit_text(text, reply_markup=keyboard, parse_mode="HTML")
@@ -307,6 +315,49 @@ async def reply_user(message: types.Message):
         await message.reply(f"❌ Ошибка отправки ответа: {e}")
     await conn.close()
 # Для запуска и инициализации базы
+@dp.callback_query_handler(lambda c: c.data.startswith("refresh|"))
+async def refresh_ticket(callback: types.CallbackQuery):
+    ticket_number = callback.data.split("|")[1]
+    conn = await asyncpg.connect(DATABASE_URL)
+    row = await conn.fetchrow("SELECT * FROM tickets WHERE ticket_number=$1", ticket_number)
+    await conn.close()
+    if not row:
+        await callback.answer("Заявка не найдена!", show_alert=True)
+        return
+
+    status_text = {
+        "Новая": "🟢 Новая",
+        "В работе": "🟡 В работе",
+        "Завершено": "✅ Завершено",
+        "Отклонено": "🔴 Отклонено"
+    }.get(row['status'], row['status'])
+
+    text = f"""
+📨 <b>Новая заявка</b>
+🗓 <b>Дата:</b> {row['created_at'].strftime('%Y-%m-%d %H:%M')}
+🎫 <b>Номер:</b> №{row['ticket_number']}
+🌐 <b>Язык:</b> {"Русский" if row['lang'] == "ru" else "O‘zbekcha"}
+📍 <b>Город:</b> {row['city']}
+🏢 <b>Отдел:</b> {row['department']}
+📝 <b>Сообщение:</b> {row['message']}
+📌 <b>Статус:</b> <i>{status_text}</i>
+💬 <b>Ответ:</b> {row['reply'] or "Пока без ответа"}
+""".strip()
+
+    keyboard = InlineKeyboardMarkup(row_width=2)
+    keyboard.add(
+        InlineKeyboardButton("✉️ Ответить", switch_inline_query_current_chat=f"/reply {row['ticket_number']}"),
+        InlineKeyboardButton("🟡 В работу", callback_data=f"status|{row['ticket_number']}|В работе"),
+        InlineKeyboardButton("🟢 Завершено", callback_data=f"status|{row['ticket_number']}|Завершено"),
+        InlineKeyboardButton("🔴 Отклонено", callback_data=f"status|{row['ticket_number']}|Отклонено"),
+    )
+    keyboard.add(
+        InlineKeyboardButton("🔄 Обновить", callback_data=f"refresh|{row['ticket_number']}")
+    )
+
+    await callback.message.edit_text(text, reply_markup=keyboard, parse_mode="HTML")
+    await callback.answer("Заявка обновлена!")
+    
 async def main():
     await init_db()
     await dp.start_polling()
