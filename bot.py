@@ -5,7 +5,7 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
 from datetime import datetime
 
-BOT_TOKEN = "8012967826:AAHssB739Qbs1h6vvikNPtKGl069-bHXtRc"
+BOT_TOKEN = "8012967826:AAHzMQtX6r9JpZtVU_y0LFq3_Gvx66iBxWM"
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 bot = Bot(token=BOT_TOKEN, parse_mode="HTML")
@@ -25,7 +25,7 @@ async def init_db():
             department TEXT,
             message TEXT,
             ticket_number TEXT,
-            status TEXT,
+             TEXT,
             reply TEXT,
             created_at TIMESTAMP DEFAULT NOW()
         )
@@ -184,16 +184,30 @@ async def show_status(message: types.Message):
     await conn.close()
 
     if not rows:
-        await message.answer("❗️ У вас пока нет заявок." if lang == "ru" else "❗️ Sizda hali hech qanday murojaat yo'q.")
+        await message.answer(
+            "❗️ У вас пока нет заявок." if lang == "ru" else "❗️ Sizda hali hech qanday murojaat yo'q."
+        )
         return
 
-    text = "🗂 <b>Последние заявки:</b>\n\n" if lang == "ru" else "🗂 <b>So‘nggi murojaatlar:</b>\n\n"
-    for row in rows:
-        text += (
-            f"<b>№{row['ticket_number']}</b> — {row['created_at'].strftime('%Y-%m-%d %H:%M')}\n"
-            f"📌 Статус: <i>{row['status']}</i>\n"
-            f"📝 {row['message'][:100]}\n\n"
-        )
+    if lang == "ru":
+        text = "🗂 <b>Последние заявки:</b>\n\n"
+        for row in rows:
+            text += (
+                f"<b>№{row['ticket_number']}</b> — {row['created_at'].strftime('%Y-%m-%d %H:%M')}\n"
+                f"📌 Статус: <i>{row['status']}</i>\n"
+                f"📝 {row['message'][:100]}\n"
+                f"💬 Ответ: {row['reply'] or 'Пока без ответа'}\n\n"
+            )
+    else:
+        text = "🗂 <b>So‘nggi murojaatlar:</b>\n\n"
+        for row in rows:
+            text += (
+                f"<b>№{row['ticket_number']}</b> — {row['created_at'].strftime('%Y-%m-%d %H:%M')}\n"
+                f"📌 Holat: <i>{row['status']}</i>\n"
+                f"📝 {row['message'][:100]}\n"
+                f"💬 Javob: {row['reply'] or 'Hozircha javob yo‘q'}\n\n"
+            )
+
     await message.answer(text, parse_mode="HTML", reply_markup=main_menu_keyboard(lang))
 
 @dp.callback_query_handler(lambda c: c.data.startswith("status|"))
@@ -223,12 +237,12 @@ async def update_status(callback: types.CallbackQuery):
         await bot.send_message(user_id, notify)
 
     # --- Формируем новое сообщение в группе с обновлённым статусом ---
-    status_text = {
+    _text = {
         "Новая": "🟢 Новая",
         "В работе": "🟡 В работе",
         "Завершено": "✅ Завершено",
         "Отклонено": "🔴 Отклонено"
-    }.get(new_status, new_status)
+    }.get(new_, new_)
 
     text = f"""
 📨 <b>Новая заявка</b>
@@ -238,16 +252,16 @@ async def update_status(callback: types.CallbackQuery):
 📍 <b>Город:</b> {row['city']}
 🏢 <b>Отдел:</b> {row['department']}
 📝 <b>Сообщение:</b> {row['message']}
-📌 <b>Статус:</b> <i>{status_text}</i>
+📌 <b>Статус:</b> <i>{_text}</i>
 💬 <b>Ответ:</b> {row['reply'] or "Пока без ответа"}
 """.strip()
 
     keyboard = InlineKeyboardMarkup(row_width=2)
     keyboard.add(
         InlineKeyboardButton("✉️ Ответить", switch_inline_query_current_chat=f"/reply {ticket_number}"),
-        InlineKeyboardButton("🟡 В работу", callback_data=f"status|{ticket_number}|В работе"),
-        InlineKeyboardButton("🟢 Завершено", callback_data=f"status|{ticket_number}|Завершено"),
-        InlineKeyboardButton("🔴 Отклонено", callback_data=f"status|{ticket_number}|Отклонено")
+        InlineKeyboardButton("🟡 В работу", callback_data=f"|{ticket_number}|В работе"),
+        InlineKeyboardButton("🟢 Завершено", callback_data=f"|{ticket_number}|Завершено"),
+        InlineKeyboardButton("🔴 Отклонено", callback_data=f"|{ticket_number}|Отклонено")
     )
     keyboard.add(
     InlineKeyboardButton("🔄 Обновить", callback_data=f"refresh|{ticket_number}")
@@ -277,12 +291,12 @@ async def reply_user(message: types.Message):
         row = await conn.fetchrow("SELECT * FROM tickets WHERE ticket_number = $1", ticket_number)
 
         # Сформировать обновлённый текст заявки
-        status_text = {
+        _text = {
             "Новая": "🟢 Новая",
             "В работе": "🟡 В работе",
             "Завершено": "✅ Завершено",
             "Отклонено": "🔴 Отклонено"
-        }.get(row['status'], row['status'])
+        }.get(row[''], row[''])
 
         text = f"""
 📨 <b>Новая заявка</b>
@@ -292,16 +306,16 @@ async def reply_user(message: types.Message):
 📍 <b>Город:</b> {row['city']}
 🏢 <b>Отдел:</b> {row['department']}
 📝 <b>Сообщение:</b> {row['message']}
-📌 <b>Статус:</b> <i>{status_text}</i>
+📌 <b>Статус:</b> <i>{_text}</i>
 💬 <b>Ответ:</b> {row['reply'] or "Пока без ответа"}
 """.strip()
 
         keyboard = InlineKeyboardMarkup(row_width=2)
         keyboard.add(
             InlineKeyboardButton("✉️ Ответить", switch_inline_query_current_chat=f"/reply {ticket_number}"),
-            InlineKeyboardButton("🟡 В работу", callback_data=f"status|{ticket_number}|В работе"),
-            InlineKeyboardButton("🟢 Завершено", callback_data=f"status|{ticket_number}|Завершено"),
-            InlineKeyboardButton("🔴 Отклонено", callback_data=f"status|{ticket_number}|Отклонено")
+            InlineKeyboardButton("🟡 В работу", callback_data=f"|{ticket_number}|В работе"),
+            InlineKeyboardButton("🟢 Завершено", callback_data=f"|{ticket_number}|Завершено"),
+            InlineKeyboardButton("🔴 Отклонено", callback_data=f"|{ticket_number}|Отклонено")
         )
         keyboard.add(
         InlineKeyboardButton("🔄 Обновить", callback_data=f"refresh|{ticket_number}")
@@ -325,12 +339,12 @@ async def refresh_ticket(callback: types.CallbackQuery):
         await callback.answer("Заявка не найдена!", show_alert=True)
         return
 
-    status_text = {
+    _text = {
         "Новая": "🟢 Новая",
         "В работе": "🟡 В работе",
         "Завершено": "✅ Завершено",
         "Отклонено": "🔴 Отклонено"
-    }.get(row['status'], row['status'])
+    }.get(row[''], row[''])
 
     text = f"""
 📨 <b>Новая заявка</b>
@@ -340,16 +354,16 @@ async def refresh_ticket(callback: types.CallbackQuery):
 📍 <b>Город:</b> {row['city']}
 🏢 <b>Отдел:</b> {row['department']}
 📝 <b>Сообщение:</b> {row['message']}
-📌 <b>Статус:</b> <i>{status_text}</i>
+📌 <b>Статус:</b> <i>{_text}</i>
 💬 <b>Ответ:</b> {row['reply'] or "Пока без ответа"}
 """.strip()
 
     keyboard = InlineKeyboardMarkup(row_width=2)
     keyboard.add(
         InlineKeyboardButton("✉️ Ответить", switch_inline_query_current_chat=f"/reply {row['ticket_number']}"),
-        InlineKeyboardButton("🟡 В работу", callback_data=f"status|{row['ticket_number']}|В работе"),
-        InlineKeyboardButton("🟢 Завершено", callback_data=f"status|{row['ticket_number']}|Завершено"),
-        InlineKeyboardButton("🔴 Отклонено", callback_data=f"status|{row['ticket_number']}|Отклонено"),
+        InlineKeyboardButton("🟡 В работу", callback_data=f"|{row['ticket_number']}|В работе"),
+        InlineKeyboardButton("🟢 Завершено", callback_data=f"|{row['ticket_number']}|Завершено"),
+        InlineKeyboardButton("🔴 Отклонено", callback_data=f"|{row['ticket_number']}|Отклонено"),
     )
     keyboard.add(
         InlineKeyboardButton("🔄 Обновить", callback_data=f"refresh|{row['ticket_number']}")
