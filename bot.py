@@ -160,7 +160,7 @@ async def save_ticket(message: types.Message):
 🏢 <b>Отдел:</b> {user_data[user_id]['department']}
 📝 <b>Сообщение:</b> {user_data[user_id]['message']}
 📌 <b>Статус:</b> <i>Новая</i>
-💬 <b>Ответ:</b> {row['reply'] or "Пока без ответа"}
+💬 <b>Ответ:</b> Пока без ответа
 """.strip()
 
     keyboard = InlineKeyboardMarkup(row_width=2)
@@ -268,6 +268,7 @@ async def reply_user(message: types.Message):
     try:
         await bot.send_message(user_id, f"📩 Ответ по тикету №{ticket_number}:\n\n{reply_text}")
         await conn.execute("UPDATE tickets SET reply = $1 WHERE ticket_number = $2", reply_text, ticket_number)
+        row = await conn.fetchrow("SELECT * FROM tickets WHERE ticket_number = $1", ticket_number)
 
         # Сформировать обновлённый текст заявки
         status_text = {
@@ -286,7 +287,7 @@ async def reply_user(message: types.Message):
 🏢 <b>Отдел:</b> {row['department']}
 📝 <b>Сообщение:</b> {row['message']}
 📌 <b>Статус:</b> <i>{status_text}</i>
-💬 <b>Ответ:</b> {reply_text}
+💬 <b>Ответ:</b> {row['reply'] or "Пока без ответа"}
 """.strip()
 
         keyboard = InlineKeyboardMarkup(row_width=2)
