@@ -1,7 +1,7 @@
 from aiogram import executor
 from loader import dp
-import handlers  # Импорт всех хендлеров через __init__.py
 from handlers.status import register_handlers
+
 register_handlers(dp)
 
 if __name__ == "__main__":
