@@ -5,7 +5,7 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
 from datetime import datetime
 
-BOT_TOKEN = "7548380199:AAELReJVgsiBN-i5a4jjJQQLT7x2aNgir8Q"
+BOT_TOKEN = "7548380199:AAGeMsBBanR1g0CSp4Ee35fLh9eInk5NG9M"
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 bot = Bot(token=BOT_TOKEN, parse_mode="HTML")
