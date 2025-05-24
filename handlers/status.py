@@ -14,7 +14,7 @@ async def show_status(message: types.Message):
     try:
         conn = await asyncpg.connect(DATABASE_URL)
         rows = await conn.fetch(
-            "SELECT ticket_number, status FROM tickets WHERE user_id = $1 ORDER BY created_at DESC LIMIT 10",
+            "SELECT ticket_number, status FROM tickets WHERE user_id = 579130123 ORDER BY created_at DESC LIMIT 10",
             user_id
         )
     except Exception as e:
