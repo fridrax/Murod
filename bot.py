@@ -160,6 +160,7 @@ async def save_ticket(message: types.Message):
 🏢 <b>Отдел:</b> {user_data[user_id]['department']}
 📝 <b>Сообщение:</b> {user_data[user_id]['message']}
 📌 <b>Статус:</b> <i>Новая</i>
+💬 <b>Ответ:</b> {row['reply'] or "Пока без ответа"}
 """.strip()
 
     keyboard = InlineKeyboardMarkup(row_width=2)
