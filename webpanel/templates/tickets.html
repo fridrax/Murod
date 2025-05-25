@@ -35,7 +35,7 @@
         {% for t in tickets %}
         <tr>
             <td>{{ t[0] }}</td>
-            <td>{{ t[7]|strftime("%d.%m.%Y %H:%M") if t[7] else '' }}</td>
+            <td>{{ t[7]|datetime_format if t[7] else '' }}</td>
             <td>{{ t[6] }}</td>
             <td>{{ t[3] }}</td>
             <td>{{ t[4] }}</td>
