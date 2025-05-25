@@ -5,7 +5,7 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
 from datetime import datetime
 
-BOT_TOKEN = "8012967826:AAFfE9Pw10ArE7rCJYRe55hAbrnfqfk1d9s"
+BOT_TOKEN = "8012967826:AAEmamZLgfI9QXq5rH5BYJSI5YsOVoerQl8"
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 bot = Bot(token=BOT_TOKEN, parse_mode="HTML")
@@ -53,6 +53,23 @@ async def start(message: types.Message):
     user_state.pop(message.from_user.id, None)
     user_data.pop(message.from_user.id, None)
 
+WELCOME_TEXTS = {
+    "ru": (
+        "👋 <b>SG Hotline</b> — это анонимная платформа обращений компании «STAR GROUP».\n"
+        "Здесь вы можете анонимно отправить своё сообщение руководству. Гарантируется, что каждое сообщение будет доставлено и получит должное внимание!\n\n"
+        "Если вы хотите сообщить о нарушениях или неправомерных действиях, пожалуйста, предоставьте как можно более подробную информацию. "
+        "Укажите, что именно произошло, где и когда это случилось. Такие детали крайне важны для того, чтобы мы могли оперативно и эффективно предпринять необходимые меры. "
+        "Ваша помощь поможет нам поддерживать высокие стандарты работы и обеспечивать соблюдение корпоративных норм."
+    ),
+    "uz": (
+        "👋 <b>SG Hotline</b> — bu «STAR GROUP» kompaniyasining anonim murojaat platformasidir.\n"
+        "Bu yerda siz rahbariyatga o‘z xabaringizni anonim tarzda yuborishingiz mumkin. Har bir xabar albatta yetkaziladi va lozim darajada e’tiborga olinadi!\n\n"
+        "Agar siz qoidabuzarliklar yoki noqonuniy harakatlar haqida xabar bermoqchi bo‘lsangiz, iltimos, imkon qadar batafsil ma’lumot bering. "
+        "Nima bo‘lganini, qayerda va qachon sodir bo‘lganini ko‘rsating. Bunday tafsilotlar bizga tezkor va samarali choralar ko‘rish imkoniyatini beradi. "
+        "Sizning yordamchingiz bizga yuqori ish standartlarini saqlash va korporativ me’yorlarga rioya qilishga yordam beradi."
+    )
+}
+
 @dp.callback_query_handler(lambda c: c.data.startswith("lang_"))
 async def set_language(callback: types.CallbackQuery):
     lang = callback.data.split("_")[1]
@@ -60,6 +77,8 @@ async def set_language(callback: types.CallbackQuery):
     user_data[user_id] = {"lang": lang}
     user_state[user_id] = None
     await callback.message.edit_reply_markup()
+    # Показываем приветствие сразу после выбора языка
+    await callback.message.answer(WELCOME_TEXTS[lang], parse_mode="HTML")
     await callback.message.answer(
         "🔻 Выберите действие:" if lang == "ru" else "🔻 Amalni tanlang:",
         reply_markup=main_menu_keyboard(lang)
@@ -71,7 +90,7 @@ async def new_ticket(message: types.Message):
     lang = user_data.get(user_id, {}).get("lang", "ru")
     user_data[user_id] = {"lang": lang}
     user_state[user_id] = "city"
-    prompt = "📍 Укажите ваш город:" if lang == "ru" else "📍 Shahringizni kiriting:"
+    prompt = "📍 Напишите из какого вы города:" if lang == "ru" else "📍 Qaysi shahardan ekanligingizni yozing:"
     # Меню убираем, чтобы пользователь не видел главное меню при заполнении заявки
     await message.answer(prompt, reply_markup=ReplyKeyboardRemove())
 
@@ -94,7 +113,7 @@ async def get_department(message: types.Message):
     for i in items:
         kb.add(KeyboardButton(i))
     kb.add(KeyboardButton(back_text))
-    await message.answer("🏢 Выберите отдел или напишите:" if lang == "ru" else "🏢 Bo‘limni tanlang yoki yozing:", reply_markup=kb)
+    await message.answer("🏢 Укажите свой отдел или напишите:" if lang == "ru" else "🏢 Bo'limingizni ko'rsating yoki yozing:", reply_markup=kb)
 
 @dp.message_handler(lambda m: user_state.get(m.from_user.id) == "department")
 async def get_problem(message: types.Message):
@@ -111,7 +130,7 @@ async def get_problem(message: types.Message):
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
     back_text = "◀️ Назад" if lang == "ru" else "◀️ Orqaga"
     kb.add(KeyboardButton(back_text))
-    await message.answer("📝 Опишите проблему:" if lang == "ru" else "📝 Muammoni batafsil yozing:", reply_markup=kb)
+    await message.answer("📝 Подробно опишите свою проблему:" if lang == "ru" else "📝 Muammoni batafsil tavsiflang:", reply_markup=kb)
 
 @dp.message_handler(lambda m: user_state.get(m.from_user.id) == "problem")
 async def save_ticket(message: types.Message):
@@ -128,7 +147,7 @@ async def save_ticket(message: types.Message):
         for i in items:
             kb.add(KeyboardButton(i))
         kb.add(KeyboardButton(back_text))
-        await message.answer("🏢 Выберите отдел или напишите:" if lang == "ru" else "🏢 Bo‘limni tanlang yoki yozing:", reply_markup=kb)
+        await message.answer("🏢 Укажите свой отдел или напишите:" if lang == "ru" else "🏢 Bo'limingizni ko'rsating yoki yozing:", reply_markup=kb)
         return
 
     user_data[user_id]["message"] = text
@@ -142,9 +161,9 @@ async def save_ticket(message: types.Message):
     await conn.close()
 
     confirm = (
-        f"✅ Ваше обращение зарегистрировано под номером №{ticket_number}"
+        f"✅ Ваше обращение зарегистрировано под номером №{ticket_number} и будет рассмотрено руководством."
         if lang == "ru" else
-        f"✅ Murojaatingiz №{ticket_number} raqam bilan ro'yxatga olindi."
+        f"✅ Murojaatingiz №{ticket_number} raqam bilan ro'yxatga olindi va rahbariyat tomonidan ko‘rib chiqiladi."
     )
     await message.answer(confirm, reply_markup=main_menu_keyboard(lang))
     user_state.pop(user_id, None)
