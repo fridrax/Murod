@@ -5,6 +5,20 @@ from forms import LoginForm, ReplyForm
 from models import get_all_tickets, get_ticket_by_id, update_ticket_status, add_ticket_reply
 from utils import login_required
 from config import SECRET_KEY, ADMIN_LOGIN, ADMIN_PASSWORD
+from datetime import datetime
+
+@app.template_filter('datetime_format')
+def datetime_format(value, format="%d.%m.%Y %H:%M"):
+    if value is None:
+        return ""
+    if isinstance(value, datetime):
+        return value.strftime(format)
+    # PostgreSQL может возвращать строку, не datetime — обработаем
+    try:
+        dt = datetime.fromisoformat(str(value))
+        return dt.strftime(format)
+    except Exception:
+        return str(value)
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = SECRET_KEY
