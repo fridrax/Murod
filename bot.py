@@ -5,7 +5,7 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
 from datetime import datetime
 
-BOT_TOKEN = "8012967826:AAEHzz4WScWEB0VC-L_NAVJHUqqmCpChzJc"
+BOT_TOKEN = "7548380199:AAGDtMoBMAfHrByswGNTII9cX21mLQE3Ag0"
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 bot = Bot(token=BOT_TOKEN, parse_mode="HTML")
@@ -120,15 +120,21 @@ async def get_problem(message: types.Message):
     user_id = message.from_user.id
     text = message.text
     lang = user_data[user_id]["lang"]
+    back_text = "◀️ Назад" if lang == "ru" else "◀️ Orqaga"
     # Кнопка назад
-    if text in ["◀️ Назад", "◀️ Orqaga"]:
+    if text == back_text:
         user_state[user_id] = "city"
-        await message.answer("📍 Укажите ваш город:" if lang == "ru" else "📍 Shahringizni kiriting:", reply_markup=ReplyKeyboardRemove())
+        # Показываем клавиатуру с кнопкой "Назад"
+        kb = ReplyKeyboardMarkup(resize_keyboard=True)
+        kb.add(KeyboardButton(back_text))
+        await message.answer(
+            "📍 Укажите ваш город:" if lang == "ru" else "📍 Shahringizni kiriting:",
+            reply_markup=kb
+        )
         return
     user_data[user_id]["department"] = text
     user_state[user_id] = "problem"
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
-    back_text = "◀️ Назад" if lang == "ru" else "◀️ Orqaga"
     kb.add(KeyboardButton(back_text))
     await message.answer("📝 Подробно опишите свою проблему:" if lang == "ru" else "📝 Muammoni batafsil tavsiflang:", reply_markup=kb)
 
