@@ -94,7 +94,7 @@ async def get_department(message: types.Message):
     for i in items:
         kb.add(KeyboardButton(i))
     kb.add(KeyboardButton(back_text))
-    await message.answer("🏢 Выберите отдел:" if lang == "ru" else "🏢 Bo‘limni tanlang:", reply_markup=kb)
+    await message.answer("🏢 Выберите отдел или напишите:" if lang == "ru" else "🏢 Bo‘limni tanlang yoki yozing:", reply_markup=kb)
 
 @dp.message_handler(lambda m: user_state.get(m.from_user.id) == "department")
 async def get_problem(message: types.Message):
@@ -128,7 +128,7 @@ async def save_ticket(message: types.Message):
         for i in items:
             kb.add(KeyboardButton(i))
         kb.add(KeyboardButton(back_text))
-        await message.answer("🏢 Выберите отдел:" if lang == "ru" else "🏢 Bo‘limni tanlang:", reply_markup=kb)
+        await message.answer("🏢 Выберите отдел или напишите:" if lang == "ru" else "🏢 Bo‘limni tanlang yoki yozing:", reply_markup=kb)
         return
 
     user_data[user_id]["message"] = text
