@@ -4,7 +4,7 @@
 <h3>Детали заявки #{{ ticket[6] }}</h3>
 <ul class="list-group mb-3">
     <li class="list-group-item"><b>ID:</b> {{ ticket[0] }}</li>
-    <li class="list-group-item"><b>Дата:</b> {{ ticket[7]|strftime("%d.%m.%Y %H:%M") if ticket[7] else '' }}</li>
+    <li class="list-group-item"><b>Дата:</b> {{ ticket[7]|datetime_format if ticket[7] else '' }}</li>
     <li class="list-group-item"><b>Пользователь:</b> {{ ticket[1] }}</li>
     <li class="list-group-item"><b>Язык:</b> {{ ticket[2] }}</li>
     <li class="list-group-item"><b>Город:</b> {{ ticket[3] }}</li>
