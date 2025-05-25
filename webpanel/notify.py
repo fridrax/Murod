@@ -1,7 +1,7 @@
 # notify.py
 import requests
 
-BOT_TOKEN = "7548380199:AAHDNiBN_YFr2wH4SKm_eVfD-zbFQVw8TQo"  # вставь свой токен бота
+BOT_TOKEN = "7548380199:AAHMfpJovucWaSk25a6b2UFo7j0pa72WLl4"  # вставь свой токен бота
 TG_API = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
 
 def notify_user(user_id, message):
