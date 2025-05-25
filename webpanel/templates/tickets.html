@@ -12,6 +12,8 @@
             <option value="Новая" {% if status == 'Новая' %}selected{% endif %}>Новая</option>
             <option value="В работе" {% if status == 'В работе' %}selected{% endif %}>В работе</option>
             <option value="Закрыта" {% if status == 'Закрыта' %}selected{% endif %}>Закрыта</option>
+            <option value="Завершено" {% if status == 'Завершено' %}selected{% endif %}>Завершено</option>
+            <option value="Отклонено" {% if status == 'Отклонено' %}selected{% endif %}>Отклонено</option>
         </select>
     </div>
     <div class="col-md-2">
@@ -47,6 +49,10 @@
                     <span class="badge bg-info text-dark">В работе</span>
                 {% elif t[8] == 'Закрыта' %}
                     <span class="badge bg-success">Закрыта</span>
+                {% elif t[8] == 'Завершено' %}
+                    <span class="badge bg-secondary">Завершено</span>
+                {% elif t[8] == 'Отклонено' %}
+                    <span class="badge bg-danger">Отклонено</span>
                 {% else %}
                     {{ t[8] }}
                 {% endif %}
@@ -60,5 +66,18 @@
 </table>
 {% if not tickets %}
 <p>Заявок не найдено.</p>
+{% endif %}
+
+<!-- Пагинация -->
+{% if pages > 1 %}
+<nav aria-label="Пагинация">
+  <ul class="pagination justify-content-center">
+    {% for p in range(1, pages+1) %}
+      <li class="page-item {% if page == p %}active{% endif %}">
+        <a class="page-link" href="?search={{ search }}&status={{ status }}&page={{ p }}">{{ p }}</a>
+      </li>
+    {% endfor %}
+  </ul>
+</nav>
 {% endif %}
 {% endblock %}
