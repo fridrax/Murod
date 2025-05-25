@@ -5,7 +5,7 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
 from datetime import datetime
 
-BOT_TOKEN = "7548380199:AAGDtMoBMAfHrByswGNTII9cX21mLQE3Ag0"
+BOT_TOKEN = "7548380199:AAHDNiBN_YFr2wH4SKm_eVfD-zbFQVw8TQo"
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 bot = Bot(token=BOT_TOKEN, parse_mode="HTML")
@@ -426,8 +426,11 @@ async def refresh_ticket(callback: types.CallbackQuery):
     )
     keyboard.add(InlineKeyboardButton("🔄 Обновить", callback_data=f"refresh|{ticket_number}"))
 
-    await callback.message.edit_text(text, reply_markup=keyboard, parse_mode="HTML")
-    await callback.answer("Заявка обновлена!")
+    try:
+        await callback.message.edit_text(text, reply_markup=keyboard, parse_mode="HTML")
+        await callback.answer("Заявка обновлена!")
+    except MessageNotModified:
+        await callback.answer("Нет изменений для обновления.", show_alert=False)
     
 async def main():
     await init_db()
