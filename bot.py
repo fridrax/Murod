@@ -5,7 +5,7 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
 from datetime import datetime
 
-BOT_TOKEN = "8012967826:AAH64HHwLgUTXOcgHqkYgew9l6hMmECAH-Q"
+BOT_TOKEN = "8012967826:AAHzleUVPuANSuqqZ7HpYqLwDiNzmkk1Ht8"
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 bot = Bot(token=BOT_TOKEN, parse_mode="HTML")
@@ -232,13 +232,11 @@ async def show_status(message: types.Message):
 @dp.callback_query_handler(lambda c: c.data.startswith("status|"))
 async def update_status(callback: types.CallbackQuery):
     _, ticket_number, new_status = callback.data.split("|")
-    # Обновляем статус в базе
     conn = await asyncpg.connect(DATABASE_URL)
     await conn.execute("UPDATE tickets SET status=$1 WHERE ticket_number=$2", new_status, ticket_number)
     row = await conn.fetchrow("SELECT * FROM tickets WHERE ticket_number=$1", ticket_number)
     await conn.close()
 
-    # --- Уведомление пользователя о смене статуса ---
     user_id = row['user_id']
     lang = row['lang']
     status_notify = {
@@ -255,13 +253,12 @@ async def update_status(callback: types.CallbackQuery):
     if notify:
         await bot.send_message(user_id, notify)
 
-    # --- Формируем новое сообщение в группе с обновлённым статусом ---
-    _text = {
+    status_text = {
         "Новая": "🟢 Новая",
         "В работе": "🟡 В работе",
         "Завершено": "✅ Завершено",
         "Отклонено": "🔴 Отклонено"
-    }.get(new_, new_)
+    }.get(new_status, new_status)
 
     text = f"""
 📨 <b>Новая заявка</b>
@@ -271,21 +268,20 @@ async def update_status(callback: types.CallbackQuery):
 📍 <b>Город:</b> {row['city']}
 🏢 <b>Отдел:</b> {row['department']}
 📝 <b>Сообщение:</b> {row['message']}
-📌 <b>Статус:</b> <i>{_text}</i>
+📌 <b>Статус:</b> <i>{status_text}</i>
 💬 <b>Ответ:</b> {row['reply'] or "Пока без ответа"}
 """.strip()
 
     keyboard = InlineKeyboardMarkup(row_width=2)
     keyboard.add(
         InlineKeyboardButton("✉️ Ответить", switch_inline_query_current_chat=f"/reply {ticket_number}"),
-        InlineKeyboardButton("🟡 В работу", callback_data=f"|{ticket_number}|В работе"),
-        InlineKeyboardButton("🟢 Завершено", callback_data=f"|{ticket_number}|Завершено"),
-        InlineKeyboardButton("🔴 Отклонено", callback_data=f"|{ticket_number}|Отклонено")
+        InlineKeyboardButton("🟡 В работу", callback_data=f"status|{ticket_number}|В работе"),
+        InlineKeyboardButton("🟢 Завершено", callback_data=f"status|{ticket_number}|Завершено"),
+        InlineKeyboardButton("🔴 Отклонено", callback_data=f"status|{ticket_number}|Отклонено")
     )
     keyboard.add(
-    InlineKeyboardButton("🔄 Обновить", callback_data=f"refresh|{ticket_number}")
+        InlineKeyboardButton("🔄 Обновить", callback_data=f"refresh|{ticket_number}")
     )
-    # Обновляем сообщение в группе
     await callback.message.edit_text(text, reply_markup=keyboard, parse_mode="HTML")
     await callback.answer("Статус изменен!")
 
@@ -347,13 +343,12 @@ async def reply_user(message: types.Message):
         await conn.execute("UPDATE tickets SET reply = $1 WHERE ticket_number = $2", reply_text, ticket_number)
         row = await conn.fetchrow("SELECT * FROM tickets WHERE ticket_number = $1", ticket_number)
 
-        # Сформировать обновлённый текст заявки
-        _text = {
+        status_text = {
             "Новая": "🟢 Новая",
             "В работе": "🟡 В работе",
             "Завершено": "✅ Завершено",
             "Отклонено": "🔴 Отклонено"
-        }.get(row[''], row[''])
+        }.get(row['status'], row['status'])
 
         text = f"""
 📨 <b>Новая заявка</b>
@@ -363,21 +358,20 @@ async def reply_user(message: types.Message):
 📍 <b>Город:</b> {row['city']}
 🏢 <b>Отдел:</b> {row['department']}
 📝 <b>Сообщение:</b> {row['message']}
-📌 <b>Статус:</b> <i>{_text}</i>
+📌 <b>Статус:</b> <i>{status_text}</i>
 💬 <b>Ответ:</b> {row['reply'] or "Пока без ответа"}
 """.strip()
 
         keyboard = InlineKeyboardMarkup(row_width=2)
         keyboard.add(
             InlineKeyboardButton("✉️ Ответить", switch_inline_query_current_chat=f"/reply {ticket_number}"),
-            InlineKeyboardButton("🟡 В работу", callback_data=f"|{ticket_number}|В работе"),
-            InlineKeyboardButton("🟢 Завершено", callback_data=f"|{ticket_number}|Завершено"),
-            InlineKeyboardButton("🔴 Отклонено", callback_data=f"|{ticket_number}|Отклонено")
+            InlineKeyboardButton("🟡 В работу", callback_data=f"status|{ticket_number}|В работе"),
+            InlineKeyboardButton("🟢 Завершено", callback_data=f"status|{ticket_number}|Завершено"),
+            InlineKeyboardButton("🔴 Отклонено", callback_data=f"status|{ticket_number}|Отклонено")
         )
         keyboard.add(
-        InlineKeyboardButton("🔄 Обновить", callback_data=f"refresh|{ticket_number}")
+            InlineKeyboardButton("🔄 Обновить", callback_data=f"refresh|{ticket_number}")
         )
-        # Обновить сообщение в группе, если команда была ответом на заявку
         if message.reply_to_message:
             await message.reply_to_message.edit_text(text, reply_markup=keyboard, parse_mode="HTML")
 
