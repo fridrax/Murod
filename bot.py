@@ -5,7 +5,7 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
 from datetime import datetime
 
-BOT_TOKEN = "8012967826:AAHzleUVPuANSuqqZ7HpYqLwDiNzmkk1Ht8"
+BOT_TOKEN = "8012967826:AAEHzz4WScWEB0VC-L_NAVJHUqqmCpChzJc"
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 bot = Bot(token=BOT_TOKEN, parse_mode="HTML")
@@ -240,14 +240,14 @@ async def update_status(callback: types.CallbackQuery):
     user_id = row['user_id']
     lang = row['lang']
     status_notify = {
-        "В работе": "⏳ Ваша заявка принята в работу.",
-        "Завершено": "✅ Ваша заявка успешно завершена.",
-        "Отклонено": "❌ Ваша заявка отклонена.",
+        "В работе": f"⏳ Ваша заявка №{ticket_number} принята в работу.",
+        "Завершено": f"✅ Ваша заявка №{ticket_number} успешно завершена.",
+        "Отклонено": f"❌ Ваша заявка №{ticket_number} отклонена.",
     }
     status_notify_uz = {
-        "В работе": "⏳ Murojaatingiz ko'rib chiqilmoqda.",
-        "Завершено": "✅ Murojaatingiz muvaffaqiyatli yakunlandi.",
-        "Отклонено": "❌ Murojaatingiz rad etildi.",
+        "В работе": f"⏳ Murojaatingiz №{ticket_number} ko'rib chiqilmoqda.",
+        "Завершено": f"✅ Murojaatingiz №{ticket_number} muvaffaqiyatli yakunlandi.",
+        "Отклонено": f"❌ Murojaatingiz №{ticket_number} rad etildi.",
     }
     notify = status_notify.get(new_status) if lang == "ru" else status_notify_uz.get(new_status)
     if notify:
