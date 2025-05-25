@@ -1,1 +1,32 @@
-
+{% extends 'base.html' %}
+{% block title %}Детали заявки | SG Hotline{% endblock %}
+{% block content %}
+<h3>Детали заявки #{{ ticket[6] }}</h3>
+<ul class="list-group mb-3">
+    <li class="list-group-item"><b>ID:</b> {{ ticket[0] }}</li>
+    <li class="list-group-item"><b>Дата:</b> {{ ticket[7]|strftime("%d.%m.%Y %H:%M") if ticket[7] else '' }}</li>
+    <li class="list-group-item"><b>Пользователь:</b> {{ ticket[1] }}</li>
+    <li class="list-group-item"><b>Язык:</b> {{ ticket[2] }}</li>
+    <li class="list-group-item"><b>Город:</b> {{ ticket[3] }}</li>
+    <li class="list-group-item"><b>Отдел:</b> {{ ticket[4] }}</li>
+    <li class="list-group-item"><b>Сообщение:</b> {{ ticket[5] }}</li>
+    <li class="list-group-item"><b>Статус:</b> {{ ticket[8] }}</li>
+    <li class="list-group-item"><b>Ответ:</b> {{ ticket[9] or "Нет ответа" }}</li>
+</ul>
+<h5>Ответить / изменить статус:</h5>
+<form method="post">
+    {{ form.hidden_tag() }}
+    <div class="mb-3">
+        {{ form.reply.label(class="form-label") }}
+        {{ form.reply(class="form-control", rows=3) }}
+    </div>
+    <div class="mb-3">
+        {{ form.status.label(class="form-label") }}
+        {{ form.status(class="form-select") }}
+    </div>
+    <div class="mb-3">
+        {{ form.submit(class="btn btn-success") }}
+        <a href="{{ url_for('tickets') }}" class="btn btn-secondary ms-2">Назад</a>
+    </div>
+</form>
+{% endblock %}
