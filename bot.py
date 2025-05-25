@@ -5,7 +5,7 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
 from datetime import datetime
 
-BOT_TOKEN = "8012967826:AAHzMQtX6r9JpZtVU_y0LFq3_Gvx66iBxWM"
+BOT_TOKEN = "8012967826:AAFfE9Pw10ArE7rCJYRe55hAbrnfqfk1d9s"
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 bot = Bot(token=BOT_TOKEN, parse_mode="HTML")
@@ -269,6 +269,44 @@ async def update_status(callback: types.CallbackQuery):
     # Обновляем сообщение в группе
     await callback.message.edit_text(text, reply_markup=keyboard, parse_mode="HTML")
     await callback.answer("Статус изменен!")
+
+# Обработка нажатия на "Настройки"
+@dp.message_handler(lambda m: m.text in ["⚙️ Настройки", "⚙️ Sozlamalar"])
+async def settings_menu(message: types.Message):
+    lang = user_data.get(message.from_user.id, {}).get("lang", "ru")
+    kb = InlineKeyboardMarkup()
+    if lang == "ru":
+        kb.add(InlineKeyboardButton("🌐 Изменить язык", callback_data="change_lang"))
+    else:
+        kb.add(InlineKeyboardButton("🌐 Tilni o‘zgartirish", callback_data="change_lang"))
+    await message.answer(
+        "Настройки:" if lang == "ru" else "Sozlamalar:",
+        reply_markup=kb
+    )
+
+# Показываем выбор языка
+@dp.callback_query_handler(lambda c: c.data == "change_lang")
+async def show_lang_select(callback: types.CallbackQuery):
+    kb = InlineKeyboardMarkup(row_width=2)
+    kb.add(
+        InlineKeyboardButton("🇷🇺 Русский", callback_data="lang_ru"),
+        InlineKeyboardButton("🇺🇿 O‘zbekcha", callback_data="lang_uz")
+    )
+    await callback.message.edit_reply_markup(reply_markup=kb)
+    await callback.answer("Выберите язык" if user_data.get(callback.from_user.id, {}).get("lang", "ru") == "ru" else "Tilni tanlang")
+
+# Смена языка из настроек (этот handler уже есть, не дублируй — просто убедись, что он не ограничен только стартом!)
+@dp.callback_query_handler(lambda c: c.data.startswith("lang_"))
+async def set_language(callback: types.CallbackQuery):
+    lang = callback.data.split("_")[1]
+    user_id = callback.from_user.id
+    user_data[user_id] = {"lang": lang}
+    user_state[user_id] = None
+    await callback.message.edit_reply_markup()  # удаляем кнопки выбора языка
+    await callback.message.answer(
+        "Язык изменён! Выберите действие:" if lang == "ru" else "Til o‘zgartirildi! Amalni tanlang:",
+        reply_markup=main_menu_keyboard(lang)
+    )
 
 @dp.message_handler(lambda m: m.chat.id == -4680581564 and m.text.startswith("/reply"))
 async def reply_user(message: types.Message):
