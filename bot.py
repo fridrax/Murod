@@ -91,8 +91,10 @@ async def new_ticket(message: types.Message):
     user_data[user_id] = {"lang": lang}
     user_state[user_id] = "city"
     prompt = "📍 Напишите из какого вы города:" if lang == "ru" else "📍 Qaysi shahardan ekanligingizni yozing:"
-    # Меню убираем, чтобы пользователь не видел главное меню при заполнении заявки
-    await message.answer(prompt, reply_markup=ReplyKeyboardRemove())
+    back_text = "◀️ Назад" if lang == "ru" else "◀️ Orqaga"
+    kb = ReplyKeyboardMarkup(resize_keyboard=True)
+    kb.add(KeyboardButton(back_text))
+    await message.answer(prompt, reply_markup=kb)
 
 @dp.message_handler(lambda m: user_state.get(m.from_user.id) == "city")
 async def get_department(message: types.Message):
@@ -128,7 +130,7 @@ async def get_problem(message: types.Message):
         kb = ReplyKeyboardMarkup(resize_keyboard=True)
         kb.add(KeyboardButton(back_text))
         await message.answer(
-            "📍 Укажите ваш город:" if lang == "ru" else "📍 Shahringizni kiriting:",
+            "📍 Напишите из какого вы города:" if lang == "ru" else "📍 Qaysi shahardan ekanligingizni yozing:",
             reply_markup=kb
         )
         return
