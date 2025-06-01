@@ -221,7 +221,8 @@ async def show_status(message: types.Message):
         for row in rows:
             text += (
                 f"<b>№{row['ticket_number']}</b> — {row['created_at'].strftime('%Y-%m-%d %H:%M')}\n"
-                f"📌 Статус: <i>{row['status']}</i>\n"
+                f"📌 Статус: <i>{row['status']}</i>"
+                + (f" (обновлено: {row['status_updated_at'].strftime('%Y-%m-%d %H:%M')})" if row['status_updated_at'] else "") + "\n"
                 f"📝 {row['message'][:100]}\n"
                 f"💬 Ответ: {row['reply'] or 'Пока без ответа'}\n\n"
             )
@@ -230,7 +231,8 @@ async def show_status(message: types.Message):
         for row in rows:
             text += (
                 f"<b>№{row['ticket_number']}</b> — {row['created_at'].strftime('%Y-%m-%d %H:%M')}\n"
-                f"📌 Holat: <i>{row['status']}</i>\n"
+                f"📌 Holat: <i>{row['status']}</i>"
+                + (f" (yangilandi: {row['status_updated_at'].strftime('%Y-%m-%d %H:%M')})" if row['status_updated_at'] else "") + "\n"
                 f"📝 {row['message'][:100]}\n"
                 f"💬 Javob: {row['reply'] or 'Hozircha javob yo‘q'}\n\n"
             )
@@ -240,22 +242,28 @@ async def show_status(message: types.Message):
 @dp.callback_query_handler(lambda c: c.data.startswith("status|"))
 async def update_status(callback: types.CallbackQuery):
     _, ticket_number, new_status = callback.data.split("|")
+    now = datetime.now()  # текущее время
+
     conn = await asyncpg.connect(DATABASE_URL)
-    await conn.execute("UPDATE tickets SET status=$1 WHERE ticket_number=$2", new_status, ticket_number)
+    # обновляем статус и дату статуса
+    await conn.execute(
+        "UPDATE tickets SET status=$1, status_updated_at=$2 WHERE ticket_number=$3",
+        new_status, now, ticket_number
+    )
     row = await conn.fetchrow("SELECT * FROM tickets WHERE ticket_number=$1", ticket_number)
     await conn.close()
 
     user_id = row['user_id']
     lang = row['lang']
     status_notify = {
-        "В работе": f"⏳ Ваша заявка №{ticket_number} принята в работу.",
-        "Завершено": f"✅ Ваша заявка №{ticket_number} успешно завершена.",
-        "Отклонено": f"❌ Ваша заявка №{ticket_number} отклонена.",
+        "В работе": f"⏳ Ваша заявка №{ticket_number} принята в работу.\nДата: {now.strftime('%Y-%m-%d %H:%M')}",
+        "Завершено": f"✅ Ваша заявка №{ticket_number} успешно завершена.\nДата: {now.strftime('%Y-%m-%d %H:%M')}",
+        "Отклонено": f"❌ Ваша заявка №{ticket_number} отклонена.\nДата: {now.strftime('%Y-%m-%d %H:%M')}",
     }
     status_notify_uz = {
-        "В работе": f"⏳ Murojaatingiz №{ticket_number} ko'rib chiqilmoqda.",
-        "Завершено": f"✅ Murojaatingiz №{ticket_number} muvaffaqiyatli yakunlandi.",
-        "Отклонено": f"❌ Murojaatingiz №{ticket_number} rad etildi.",
+        "В работе": f"⏳ Murojaatingiz №{ticket_number} ko'rib chiqilmoqda.\nSana: {now.strftime('%Y-%m-%d %H:%M')}",
+        "Завершено": f"✅ Murojaatingiz №{ticket_number} muvaffaqiyatli yakunlandi.\nSana: {now.strftime('%Y-%m-%d %H:%M')}",
+        "Отклонено": f"❌ Murojaatingiz №{ticket_number} rad etildi.\nSana: {now.strftime('%Y-%m-%d %H:%M')}",
     }
     notify = status_notify.get(new_status) if lang == "ru" else status_notify_uz.get(new_status)
     if notify:
@@ -270,13 +278,14 @@ async def update_status(callback: types.CallbackQuery):
 
     text = f"""
 📨 <b>Новая заявка</b>
-🗓 <b>Дата:</b> {row['created_at'].strftime('%Y-%m-%d %H:%M')}
+🗓 <b>Дата создания:</b> {row['created_at'].strftime('%Y-%m-%d %H:%M')}
 🎫 <b>Номер:</b> №{row['ticket_number']}
 🌐 <b>Язык:</b> {"Русский" if row['lang'] == "ru" else "O‘zbekcha"}
 📍 <b>Город:</b> {row['city']}
 🏢 <b>Отдел:</b> {row['department']}
 📝 <b>Сообщение:</b> {row['message']}
 📌 <b>Статус:</b> <i>{status_text}</i>
+🕓 <b>Дата статуса:</b> {row['status_updated_at'].strftime('%Y-%m-%d %H:%M') if row['status_updated_at'] else ''}
 💬 <b>Ответ:</b> {row['reply'] or "Пока без ответа"}
 """.strip()
 
