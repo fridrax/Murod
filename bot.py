@@ -208,8 +208,9 @@ async def save_ticket(message: types.Message):
     user_id = message.from_user.id
     text = message.text
     lang = user_data[user_id]["lang"]
+
     # Кнопка назад
-      if text in ["◀️ Назад", "◀️ Orqaga"]:
+    if text in ["◀️ Назад", "◀️ Orqaga"]:
         user_state[user_id] = "department"
         # Новый список отделов
         DEPARTMENTS_RU = [
@@ -240,15 +241,15 @@ async def save_ticket(message: types.Message):
             "Sotuv bo‘limi HEINZ/Ritter Sport",
             "Bo‘limsiz"
         ]
+        kb = ReplyKeyboardMarkup(resize_keyboard=True)
         items = DEPARTMENTS_RU if lang == "ru" else DEPARTMENTS_UZ
         back_text = "◀️ Назад" if lang == "ru" else "◀️ Orqaga"
-        kb = ReplyKeyboardMarkup(resize_keyboard=True)
         for i in items:
             kb.add(KeyboardButton(i))
         kb.add(KeyboardButton(back_text))
         await message.answer(
-            "🏢 Укажите свой отдел или выберите из списка:" if lang == "ru"
-            else "🏢 Bo‘limingizni ko‘rsating yoki tanlang:",
+            "🏢 Укажите свой отдел или напишите:" if lang == "ru"
+            else "🏢 Bo'limingizni ko'rsating yoki yozing:",
             reply_markup=kb
         )
         return
