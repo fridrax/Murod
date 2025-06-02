@@ -42,9 +42,9 @@
             <td>{{ t[6] }}</td>
             <td>{{ t[3] }}</td>
             <td>{{ t[4] }}</td>
+             <td>{{ t[10]|datetime_format if t[10] else '' }}</td>
             <td>{{ t[5][:40] }}{% if t[5]|length > 40 %}...{% endif %}</td>
-            <td>{{ t[10]|datetime_format if t[10] else '' }}</td>
-            <td>
+             <td>
                 {% if t[8] == 'Новая' %}
                     <span class="badge bg-warning text-dark">Новая</span>
                 {% elif t[8] == 'В работе' %}
