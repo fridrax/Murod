@@ -6,10 +6,11 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
 from datetime import datetime, timedelta, timezone
 
-BOT_TOKEN = "7548380199:AAGfBxTTzZWD-JZ-8RjQJZ6G5FFJMLgB5uk"
+BOT_TOKEN = "7548380199:AAGx4m6EZHAJT_vvcFPP81LM2m1RbJueFtA"
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 UZBEKISTAN_TZ = timezone(timedelta(hours=5))
+TASHKENT_TZ = pytz.timezone('Asia/Tashkent')
 
 bot = Bot(token=BOT_TOKEN, parse_mode="HTML")
 dp = Dispatcher(bot)
