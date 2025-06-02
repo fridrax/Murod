@@ -135,18 +135,24 @@ async def get_department(message: types.Message):
     kb.add(KeyboardButton(back_text))
     await message.answer("🏢 Укажите свой отдел или напишите:" if lang == "ru" else "🏢 Bo'limingizni ko'rsating yoki yozing:", reply_markup=kb)
 
+def city_keyboard(lang):
+    kb = ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
+    cities = CITIES_RU if lang == "ru" else CITIES_UZ
+    for city in cities:
+        kb.insert(KeyboardButton(city))
+    kb.add(KeyboardButton("◀️ Назад" if lang == "ru" else "◀️ Orqaga"))
+    return kb
+
 @dp.message_handler(lambda m: user_state.get(m.from_user.id) == "department")
 async def get_problem(message: types.Message):
     user_id = message.from_user.id
     text = message.text
     lang = user_data[user_id]["lang"]
     back_text = "◀️ Назад" if lang == "ru" else "◀️ Orqaga"
-    # Кнопка назад
     if text == back_text:
         user_state[user_id] = "city"
-        # Показываем клавиатуру с кнопкой "Назад"
-        kb = ReplyKeyboardMarkup(resize_keyboard=True)
-        kb.add(KeyboardButton(back_text))
+        # Показываем клавиатуру с городами!
+        kb = city_keyboard(lang)  # Вот здесь используем функцию с городами
         await message.answer(
             "📍 Напишите из какого вы города:" if lang == "ru" else "📍 Qaysi shahardan ekanligingizni yozing:",
             reply_markup=kb
@@ -156,7 +162,10 @@ async def get_problem(message: types.Message):
     user_state[user_id] = "problem"
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
     kb.add(KeyboardButton(back_text))
-    await message.answer("📝 Подробно опишите свою проблему:" if lang == "ru" else "📝 Muammoni batafsil tavsiflang:", reply_markup=kb)
+    await message.answer(
+        "📝 Подробно опишите свою проблему:" if lang == "ru" else "📝 Muammoni batafsil tavsiflang:",
+        reply_markup=kb
+    )
 
 @dp.message_handler(lambda m: user_state.get(m.from_user.id) == "problem")
 async def save_ticket(message: types.Message):
