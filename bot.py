@@ -4,12 +4,12 @@ import asyncio
 import pytz
 from aiogram import Bot, Dispatcher, types
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
-BOT_TOKEN = "7548380199:AAHuimOasDC-QQrJBn2xrpKTtbwnR_L7rY0"
+BOT_TOKEN = "7548380199:AAGfBxTTzZWD-JZ-8RjQJZ6G5FFJMLgB5uk"
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-TASHKENT_TZ = pytz.timezone("Asia/Tashkent")
+UZBEKISTAN_TZ = timezone(timedelta(hours=5))
 
 bot = Bot(token=BOT_TOKEN, parse_mode="HTML")
 dp = Dispatcher(bot)
@@ -208,9 +208,13 @@ async def save_ticket(message: types.Message):
 
     # Уведомление в группу
     admin_chat_id = -4680581564
+
+    # --- Тут время строго в Ташкенте, без tzinfo! ---
+    now = datetime.now(TASHKENT_TZ).replace(tzinfo=None)
+
     text = f"""
 📨 <b>Новая заявка</b>
-🗓 <b>Дата:</b> {datetime.now().strftime('%Y-%m-%d %H:%M')}
+🗓 <b>Дата:</b> {now.strftime('%Y-%m-%d %H:%M')}
 🎫 <b>Номер:</b> №{ticket_number}
 🌐 <b>Язык:</b> {"Русский" if lang == "ru" else "O‘zbekcha"}
 📍 <b>Город:</b> {user_data[user_id]['city']}
@@ -228,7 +232,7 @@ async def save_ticket(message: types.Message):
         InlineKeyboardButton("🔴 Отклонено", callback_data=f"status|{ticket_number}|Отклонено")
     )
     keyboard.add(
-    InlineKeyboardButton("🔄 Обновить", callback_data=f"refresh|{ticket_number}")
+        InlineKeyboardButton("🔄 Обновить", callback_data=f"refresh|{ticket_number}")
     )
     await bot.send_message(admin_chat_id, text, reply_markup=keyboard)
 
@@ -280,7 +284,8 @@ async def show_status(message: types.Message):
 @dp.callback_query_handler(lambda c: c.data.startswith("status|"))
 async def update_status(callback: types.CallbackQuery):
     _, ticket_number, new_status = callback.data.split("|")
-    now = datetime.now(TASHKENT_TZ)  # текущее время с таймзоной Узбекистана
+    # Получаем время по Узбекистану (без tzinfo для PG!)
+    now = datetime.now(UZBEKISTAN_TZ).replace(tzinfo=None)
 
     conn = await asyncpg.connect(DATABASE_URL)
     await conn.execute(
@@ -290,24 +295,17 @@ async def update_status(callback: types.CallbackQuery):
     row = await conn.fetchrow("SELECT * FROM tickets WHERE ticket_number=$1", ticket_number)
     await conn.close()
 
-    def format_dt(dt):
-        if dt is None:
-            return ''
-        if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=pytz.UTC)
-        return dt.astimezone(TASHKENT_TZ).strftime('%Y-%m-%d %H:%M')
-
     user_id = row['user_id']
     lang = row['lang']
     status_notify = {
-        "В работе": f"⏳ Ваша заявка №{ticket_number} принята в работу.\nДата: {format_dt(now)}",
-        "Завершено": f"✅ Ваша заявка №{ticket_number} успешно завершена.\nДата: {format_dt(now)}",
-        "Отклонено": f"❌ Ваша заявка №{ticket_number} отклонена.\nДата: {format_dt(now)}",
+        "В работе": f"⏳ Ваша заявка №{ticket_number} принята в работу.\nДата: {now.strftime('%Y-%m-%d %H:%M')}",
+        "Завершено": f"✅ Ваша заявка №{ticket_number} успешно завершена.\nДата: {now.strftime('%Y-%m-%d %H:%M')}",
+        "Отклонено": f"❌ Ваша заявка №{ticket_number} отклонена.\nДата: {now.strftime('%Y-%m-%d %H:%M')}",
     }
     status_notify_uz = {
-        "В работе": f"⏳ Murojaatingiz №{ticket_number} ko'rib chiqilmoqda.\nSana: {format_dt(now)}",
-        "Завершено": f"✅ Murojaatingiz №{ticket_number} muvaffaqiyatli yakunlandi.\nSana: {format_dt(now)}",
-        "Отклонено": f"❌ Murojaatingiz №{ticket_number} rad etildi.\nSana: {format_dt(now)}",
+        "В работе": f"⏳ Murojaatingiz №{ticket_number} ko'rib chiqilmoqda.\nSana: {now.strftime('%Y-%m-%d %H:%M')}",
+        "Завершено": f"✅ Murojaatingiz №{ticket_number} muvaffaqiyatli yakunlandi.\nSana: {now.strftime('%Y-%m-%d %H:%M')}",
+        "Отклонено": f"❌ Murojaatingiz №{ticket_number} rad etildi.\nSana: {now.strftime('%Y-%m-%d %H:%M')}",
     }
     notify = status_notify.get(new_status) if lang == "ru" else status_notify_uz.get(new_status)
     if notify:
@@ -322,14 +320,14 @@ async def update_status(callback: types.CallbackQuery):
 
     text = f"""
 📨 <b>Новая заявка</b>
-🗓 <b>Дата создания:</b> {format_dt(row['created_at'])}
+🗓 <b>Дата создания:</b> {row['created_at'].strftime('%Y-%m-%d %H:%M')}
 🎫 <b>Номер:</b> №{row['ticket_number']}
 🌐 <b>Язык:</b> {"Русский" if row['lang'] == "ru" else "O‘zbekcha"}
 📍 <b>Город:</b> {row['city']}
 🏢 <b>Отдел:</b> {row['department']}
 📝 <b>Сообщение:</b> {row['message']}
 📌 <b>Статус:</b> <i>{status_text}</i>
-🕓 <b>Дата статуса:</b> {format_dt(row['status_updated_at']) if row['status_updated_at'] else ''}
+🕓 <b>Дата статуса:</b> {row['status_updated_at'].strftime('%Y-%m-%d %H:%M') if row['status_updated_at'] else ''}
 💬 <b>Ответ:</b> {row['reply'] or "Пока без ответа"}
 """.strip()
 
