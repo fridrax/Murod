@@ -6,7 +6,7 @@ from models import get_all_tickets, get_ticket_by_id, update_ticket_status, add_
 from utils import login_required
 from config import SECRET_KEY, ADMIN_LOGIN, ADMIN_PASSWORD
 from datetime import datetime
-from notify import notify_user  # Новый импорт для уведомлений
+from notify import notify_user  # Функция для Telegram уведомлений
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = SECRET_KEY
@@ -55,7 +55,14 @@ def tickets():
     end = start + per_page
     tickets = all_tickets[start:end]
 
-    return render_template('tickets.html', tickets=tickets, search=search, status=status, page=page, pages=pages)
+    return render_template(
+        'tickets.html',
+        tickets=tickets,
+        search=search,
+        status=status,
+        page=page,
+        pages=pages
+    )
 
 @app.route('/ticket/<int:ticket_id>', methods=['GET', 'POST'])
 @login_required
@@ -67,9 +74,10 @@ def ticket_detail(ticket_id):
     form = ReplyForm()
     if form.validate_on_submit():
         add_ticket_reply(ticket_id, form.reply.data)
+        # ВАЖНО: update_ticket_status должен обновлять и статус, и дату status_updated_at!
         update_ticket_status(ticket_id, form.status.data)
         # --- Отправка уведомления пользователю ---
-        ticket = get_ticket_by_id(ticket_id)  # получить свежие данные
+        ticket = get_ticket_by_id(ticket_id)  # получаем свежие данные
         user_id = ticket[1]
         reply = form.reply.data
         status = form.status.data
