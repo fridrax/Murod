@@ -6,7 +6,7 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
 from datetime import datetime, timedelta, timezone
 
-BOT_TOKEN = "7548380199:AAGx4m6EZHAJT_vvcFPP81LM2m1RbJueFtA"
+BOT_TOKEN = "7548380199:AAFo_Kix62meR7WOMPtNQ15AEtN9kiFAejQ"
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 UZBEKISTAN_TZ = timezone(timedelta(hours=5))
@@ -131,13 +131,45 @@ async def get_department(message: types.Message):
     user_data[user_id]["city"] = text
     user_state[user_id] = "department"
     # Клавиатура с отделами + кнопка назад
-    kb = ReplyKeyboardMarkup(resize_keyboard=True)
-    items = ["Продажи", "Технический", "Сервис"] if lang == "ru" else ["Sotuv", "Texnik", "Xizmat"]
+    DEPARTMENTS_RU = [
+        "Администрация",
+        "Склад",
+        "Доставка",
+        "Одел продаж",
+        "Одел продаж Johnson & Johnson/RB",
+        "Одел продаж BIC/CXЗ/Silver",
+        "Одел продаж NESTLE",
+        "Одел продаж CosmoProf",
+        "Одел продаж Mondelez",
+        "Одел продаж LOREAL",
+        "Одел продаж HEINZ/Ritter Sport",
+        "Без отдела"
+    ]
+    DEPARTMENTS_UZ = [
+        "Administratsiya",
+        "Ombor",
+        "Yetkazib berish",
+        "Sotuv bo‘limi",
+        "Sotuv bo‘limi Johnson & Johnson/RB",
+        "Sotuv bo‘limi BIC/CXЗ/Silver",
+        "Sotuv bo‘limi NESTLE",
+        "Sotuv bo‘limi CosmoProf",
+        "Sotuv bo‘limi Mondelez",
+        "Sotuv bo‘limi LOREAL",
+        "Sotuv bo‘limi HEINZ/Ritter Sport",
+        "Bo‘limsiz"
+    ]
+    departments = DEPARTMENTS_RU if lang == "ru" else DEPARTMENTS_UZ
     back_text = "◀️ Назад" if lang == "ru" else "◀️ Orqaga"
-    for i in items:
-        kb.add(KeyboardButton(i))
+    kb = ReplyKeyboardMarkup(resize_keyboard=True)
+    for dep in departments:
+        kb.add(KeyboardButton(dep))
     kb.add(KeyboardButton(back_text))
-    await message.answer("🏢 Укажите свой отдел или напишите:" if lang == "ru" else "🏢 Bo'limingizni ko'rsating yoki yozing:", reply_markup=kb)
+    await message.answer(
+        "🏢 Укажите свой отдел или выберите из списка:" if lang == "ru"
+        else "🏢 Bo‘limingizni ko‘rsating yoki tanlang:",
+        reply_markup=kb
+    )
 
 def city_keyboard(lang):
     kb = ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
@@ -177,16 +209,48 @@ async def save_ticket(message: types.Message):
     text = message.text
     lang = user_data[user_id]["lang"]
     # Кнопка назад
-    if text in ["◀️ Назад", "◀️ Orqaga"]:
+      if text in ["◀️ Назад", "◀️ Orqaga"]:
         user_state[user_id] = "department"
-        # Отделы
-        kb = ReplyKeyboardMarkup(resize_keyboard=True)
-        items = ["Продажи", "Технический", "Сервис"] if lang == "ru" else ["Sotuv", "Texnik", "Xizmat"]
+        # Новый список отделов
+        DEPARTMENTS_RU = [
+            "Администрация",
+            "Склад",
+            "Доставка",
+            "Одел продаж",
+            "Одел продаж Johnson & Johnson/RB",
+            "Одел продаж BIC/CXЗ/Silver",
+            "Одел продаж NESTLE",
+            "Одел продаж CosmoProf",
+            "Одел продаж Mondelez",
+            "Одел продаж LOREAL",
+            "Одел продаж HEINZ/Ritter Sport",
+            "Без отдела"
+        ]
+        DEPARTMENTS_UZ = [
+            "Administratsiya",
+            "Ombor",
+            "Yetkazib berish",
+            "Sotuv bo‘limi",
+            "Sotuv bo‘limi Johnson & Johnson/RB",
+            "Sotuv bo‘limi BIC/CXЗ/Silver",
+            "Sotuv bo‘limi NESTLE",
+            "Sotuv bo‘limi CosmoProf",
+            "Sotuv bo‘limi Mondelez",
+            "Sotuv bo‘limi LOREAL",
+            "Sotuv bo‘limi HEINZ/Ritter Sport",
+            "Bo‘limsiz"
+        ]
+        items = DEPARTMENTS_RU if lang == "ru" else DEPARTMENTS_UZ
         back_text = "◀️ Назад" if lang == "ru" else "◀️ Orqaga"
+        kb = ReplyKeyboardMarkup(resize_keyboard=True)
         for i in items:
             kb.add(KeyboardButton(i))
         kb.add(KeyboardButton(back_text))
-        await message.answer("🏢 Укажите свой отдел или напишите:" if lang == "ru" else "🏢 Bo'limingizni ko'rsating yoki yozing:", reply_markup=kb)
+        await message.answer(
+            "🏢 Укажите свой отдел или выберите из списка:" if lang == "ru"
+            else "🏢 Bo‘limingizni ko‘rsating yoki tanlang:",
+            reply_markup=kb
+        )
         return
 
     user_data[user_id]["message"] = text
