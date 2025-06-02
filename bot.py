@@ -84,15 +84,33 @@ async def set_language(callback: types.CallbackQuery):
         reply_markup=main_menu_keyboard(lang)
     )
 
+CITIES_RU = [
+    "Ташкент", "Самаркандская область", "Бухарская область", "Наманганская область",
+    "Андижанская область", "Ферганская область", "Навоийская область", "Кашкадарьинская область",
+    "Республика Каракалпакстан", "Хорезмская область", "Джизакская область",
+    "Сырдарьинская область", "Сурхандарьинская область", "Ташкентская область"
+]
+
+CITIES_UZ = [
+    "Toshkent", "Samarqand viloyati", "Buxoro viloyati", "Namangan viloyati",
+    "Andijon viloyati", "Farg‘ona viloyati", "Navoiy viloyati", "Qashqadaryo viloyati",
+    "Qoraqalpog‘iston Respublikasi", "Xorazm viloyati", "Jizzax viloyati",
+    "Sirdaryo viloyati", "Surxondaryo viloyati", "Toshkent viloyati"
+]
+
 @dp.message_handler(lambda m: m.text in ["📝 Оставить заявку", "📝 Murojaat qoldirish"])
 async def new_ticket(message: types.Message):
     user_id = message.from_user.id
     lang = user_data.get(user_id, {}).get("lang", "ru")
     user_data[user_id] = {"lang": lang}
     user_state[user_id] = "city"
-    prompt = "📍 Напишите из какого вы города:" if lang == "ru" else "📍 Qaysi shahardan ekanligingizni yozing:"
+    prompt = "📍 Выберите или введите ваш город:" if lang == "ru" else "📍 Shaharingizni tanlang yoki kiriting:"
     back_text = "◀️ Назад" if lang == "ru" else "◀️ Orqaga"
-    kb = ReplyKeyboardMarkup(resize_keyboard=True)
+    kb = ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
+    # Добавляем города
+    cities = CITIES_RU if lang == "ru" else CITIES_UZ
+    for city in cities:
+        kb.add(KeyboardButton(city))
     kb.add(KeyboardButton(back_text))
     await message.answer(prompt, reply_markup=kb)
 
