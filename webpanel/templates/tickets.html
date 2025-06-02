@@ -24,13 +24,13 @@
     <thead>
         <tr>
             <th>ID</th>
-            <th>Дата</th>
+            <th>Дата создания</th>
             <th>Номер тикета</th>
             <th>Город</th>
             <th>Отдел</th>
             <th>Сообщение</th>
             <th>Статус</th>
-            <th>Обновлено</th>
+            <th>Дата обновления статуса</th>
             <th>Действия</th>
         </tr>
     </thead>
@@ -42,9 +42,8 @@
             <td>{{ t[6] }}</td>
             <td>{{ t[3] }}</td>
             <td>{{ t[4] }}</td>
-             <td>{{ t[10]|datetime_format if t[10] else '' }}</td>
             <td>{{ t[5][:40] }}{% if t[5]|length > 40 %}...{% endif %}</td>
-             <td>
+            <td>
                 {% if t[8] == 'Новая' %}
                     <span class="badge bg-warning text-dark">Новая</span>
                 {% elif t[8] == 'В работе' %}
@@ -59,6 +58,7 @@
                     {{ t[8] }}
                 {% endif %}
             </td>
+            <td>{{ t[10]|datetime_format if t[10] else '' }}</td>
             <td>
                 <a href="{{ url_for('ticket_detail', ticket_id=t[0]) }}" class="btn btn-sm btn-outline-primary">Открыть</a>
             </td>
@@ -66,6 +66,7 @@
         {% endfor %}
     </tbody>
 </table>
+
 {% if not tickets %}
 <p>Заявок не найдено.</p>
 {% endif %}
