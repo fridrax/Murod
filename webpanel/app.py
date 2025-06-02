@@ -5,20 +5,25 @@ from forms import LoginForm, ReplyForm
 from models import get_all_tickets, get_ticket_by_id, update_ticket_status, add_ticket_reply
 from utils import login_required
 from config import SECRET_KEY, ADMIN_LOGIN, ADMIN_PASSWORD
-from datetime import datetime
+from datetime import datetime, timedelta
 from notify import notify_user  # Функция для Telegram уведомлений
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = SECRET_KEY
 
+# Фильтр форматирования даты с учетом GMT+5
 @app.template_filter('datetime_format')
 def datetime_format(value, format="%d.%m.%Y %H:%M"):
     if value is None:
         return ""
-    if isinstance(value, datetime):
-        return value.strftime(format)
     try:
-        dt = datetime.fromisoformat(str(value))
+        if isinstance(value, str):
+            dt = datetime.fromisoformat(value)
+        elif isinstance(value, datetime):
+            dt = value
+        else:
+            dt = datetime.fromisoformat(str(value))
+        dt = dt + timedelta(hours=5)  # Переводим в GMT+5
         return dt.strftime(format)
     except Exception:
         return str(value)
@@ -74,10 +79,10 @@ def ticket_detail(ticket_id):
     form = ReplyForm()
     if form.validate_on_submit():
         add_ticket_reply(ticket_id, form.reply.data)
-        # ВАЖНО: update_ticket_status должен обновлять и статус, и дату status_updated_at!
+        # Важно: update_ticket_status должен обновлять и статус, и дату status_updated_at!
         update_ticket_status(ticket_id, form.status.data)
         # --- Отправка уведомления пользователю ---
-        ticket = get_ticket_by_id(ticket_id)  # получаем свежие данные
+        ticket = get_ticket_by_id(ticket_id)  # получить свежие данные
         user_id = ticket[1]
         reply = form.reply.data
         status = form.status.data
